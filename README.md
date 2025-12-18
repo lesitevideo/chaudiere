@@ -8,14 +8,31 @@ Interface web moderne pour contrôler votre chaudière **Chaffoteaux MIRA C GREE
 
 ## ✨ Fonctionnalités
 
-- 📊 **Affichage en temps réel** de la température actuelle et cible
-- 🎛️ **Réglage de la température** entre 15°C et 30°C
-- ⚡ **Interface réactive** avec boutons +/- et slider
+### 🔥 Chauffage
+- 📊 **Affichage en temps réel** des températures (départ, retour, pièce, extérieure)
+- 🎛️ **Réglage de la température Zone 1** entre 5°C et 35°C
+- 📈 **Informations avancées** : pente/décalage thermorégulation, températures jour/nuit/fixe
+
+### 💧 Eau Chaude Sanitaire (ECS)
+- 🚰 **Contrôle température ECS** entre 35°C et 65°C
+- 🛁 **Mode confort** activable/désactivable
+- 🌡️ **Température antigel** en temps réel
+- 📊 **Statut ECS** détaillé
+
+### 📊 État et Diagnostics
+- 🔥 **État flamme** et cycles d'allumage
+- 💨 **Vitesse ventilateur** en RPM
+- ⚙️ **Statut chaudière** complet (général, chauffage, SRA)
+- ⚠️ **Codes d'erreur** en temps réel
+
+### 🎨 Interface
+- 📑 **Interface à onglets** (Chauffage, Eau Chaude, État, Avancé)
+- ⚡ **Boutons +/-** et slider pour réglage précis
 - 🔄 **Actualisation automatique** toutes les 30 secondes
 - 📱 **Design responsive** optimisé pour mobile et desktop
 - 🌐 **Accès à distance** via Internet (avec configuration Freebox)
 - 🔌 **Indicateur de connexion** en temps réel
-- 🎨 **Interface moderne** et intuitive
+- ✅ **Messages de confirmation** pour chaque action
 
 ## 📸 Aperçu
 
@@ -191,9 +208,17 @@ curl http://localhost:3000
 ## 📚 Documentation
 
 - [Guide d'installation complet](INSTALLATION.md)
+- [Liste des commandes eBUS](COMMANDES_EBUS.md)
+- [Configuration BridgeNET](https://github.com/ysard/ebusd_configuration_chaffoteaux_bridgenet)
 - [Documentation ebusd](https://github.com/john30/ebusd)
 - [Wiki ebusd](https://github.com/john30/ebusd/wiki)
 - [Configurations eBUS](https://github.com/john30/ebusd-configuration)
+
+## ⚙️ Configuration BridgeNET
+
+Cette interface utilise les commandes spécifiques au protocole **BridgeNET** de Chaffoteaux. Les noms de commandes sont basés sur le fichier CSV de [ysard/ebusd_configuration_chaffoteaux_bridgenet](https://github.com/ysard/ebusd_configuration_chaffoteaux_bridgenet/blob/master/mira_c_green.csv).
+
+**Important** : Si vous utilisez une configuration eBUS générique, les commandes peuvent être différentes. Consultez le fichier [COMMANDES_EBUS.md](COMMANDES_EBUS.md) pour la liste complète des commandes utilisées.
 
 ## 🔐 Sécurité
 
@@ -226,14 +251,18 @@ MIT License - Libre d'utilisation et de modification
 
 ## 🎯 Roadmap
 
+- [x] Correction commandes eBUS pour Mira C Green BridgeNET
+- [x] Contrôle eau chaude sanitaire (DHW)
+- [x] Interface à onglets
+- [x] Informations avancées (flamme, ventilateur, thermorégulation)
 - [ ] Authentification utilisateur
 - [ ] Historique des températures avec graphiques
-- [ ] Planification horaire (programmation)
+- [ ] Support zones multiples (Z2-Z7)
+- [ ] Planification horaire (programmation timer)
+- [ ] Historique des erreurs (10 dernières)
 - [ ] Notifications push
-- [ ] Support multi-chaudières
 - [ ] Application mobile native
-- [ ] Mode économie d'énergie automatique
-- [ ] Intégration Home Assistant
+- [ ] Intégration Home Assistant / MQTT
 
 ## 📞 Support
 
