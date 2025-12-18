@@ -10,8 +10,9 @@ Interface web moderne pour contrôler votre chaudière **Chaffoteaux MIRA C GREE
 
 ### 🔥 Chauffage
 - 📊 **Affichage en temps réel** des températures (départ, retour, pièce, extérieure)
-- 🎛️ **Réglage de la température Zone 1** entre 5°C et 35°C
-- 📈 **Informations avancées** : pente/décalage thermorégulation, températures jour/nuit/fixe
+- 🎛️ **Réglage direct de la température de l'eau** en mode fixe entre 35°C et 65°C
+- 🌡️ **Contrôle simple** sans thermorégulation ni sonde externe (comme un bouton de chaudière)
+- 📈 **Informations avancées** : pente/décalage thermorégulation, paramètres de zone
 
 ### 💧 Eau Chaude Sanitaire (ECS)
 - 🚰 **Contrôle température ECS** entre 35°C et 65°C
@@ -70,7 +71,7 @@ Interface web moderne pour contrôler votre chaudière **Chaffoteaux MIRA C GREE
 
 ```bash
 # Télécharger le script d'installation
-wget https://raw.githubusercontent.com/lesitevideo/chaudiere/main/install.sh
+wget https://raw.githubusercontent.com/lesitevideo/chaudiere/main/scripts/install.sh
 
 # Rendre le script exécutable
 chmod +x install.sh
@@ -81,7 +82,7 @@ chmod +x install.sh
 
 ### Option 2 : Installation manuelle
 
-Consultez le fichier [INSTALLATION.md](INSTALLATION.md) pour les instructions détaillées.
+Consultez le fichier [INSTALLATION.md](docs/INSTALLATION.md) pour les instructions détaillées.
 
 ## 📋 Configuration rapide
 
@@ -151,11 +152,11 @@ L'interface est optimisée pour mobile et peut être ajoutée à l'écran d'accu
 # Vérifier le statut d'ebusd
 sudo systemctl status ebusd
 
-# Lire la température actuelle
-ebusctl read FlowTemp
+# Lire la température de départ actuelle
+ebusctl read water_temp_out
 
-# Changer la température de consigne
-ebusctl write -c Hc1HeatSetTemp 21.5
+# Régler la température fixe de l'eau de chauffage
+ebusctl write z1_fixed_temp 50.0
 
 # Lister toutes les commandes disponibles
 ebusctl find
@@ -207,8 +208,8 @@ curl http://localhost:3000
 
 ## 📚 Documentation
 
-- [Guide d'installation complet](INSTALLATION.md)
-- [Liste des commandes eBUS](COMMANDES_EBUS.md)
+- [Guide d'installation complet](docs/INSTALLATION.md)
+- [Liste des commandes eBUS](docs/COMMANDES_EBUS.md)
 - [Configuration BridgeNET](https://github.com/ysard/ebusd_configuration_chaffoteaux_bridgenet)
 - [Documentation ebusd](https://github.com/john30/ebusd)
 - [Wiki ebusd](https://github.com/john30/ebusd/wiki)
@@ -218,7 +219,7 @@ curl http://localhost:3000
 
 Cette interface utilise les commandes spécifiques au protocole **BridgeNET** de Chaffoteaux. Les noms de commandes sont basés sur le fichier CSV de [ysard/ebusd_configuration_chaffoteaux_bridgenet](https://github.com/ysard/ebusd_configuration_chaffoteaux_bridgenet/blob/master/mira_c_green.csv).
 
-**Important** : Si vous utilisez une configuration eBUS générique, les commandes peuvent être différentes. Consultez le fichier [COMMANDES_EBUS.md](COMMANDES_EBUS.md) pour la liste complète des commandes utilisées.
+**Important** : Si vous utilisez une configuration eBUS générique, les commandes peuvent être différentes. Consultez le fichier [COMMANDES_EBUS.md](docs/COMMANDES_EBUS.md) pour la liste complète des commandes utilisées.
 
 ## 🔐 Sécurité
 
