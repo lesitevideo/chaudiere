@@ -1,4 +1,4 @@
-# 🔥 Contrôle de Chaudière Chaffoteaux via eBUS
+# Contrôle de Chaudière Chaffoteaux via eBUS
 
 Interface web moderne pour contrôler votre chaudière **Chaffoteaux MIRA C GREEN 25** via un adaptateur **eBUS C6 Stick Edition** et un Raspberry Pi.
 
@@ -6,40 +6,40 @@ Interface web moderne pour contrôler votre chaudière **Chaffoteaux MIRA C GREE
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-Raspberry%20Pi-red)
 
-## ✨ Fonctionnalités
+## Fonctionnalités
 
-### 🔥 Chauffage
-- 📊 **Affichage en temps réel** des températures (départ, retour, pièce, extérieure)
-- 🎛️ **Réglage direct de la température de l'eau** en mode fixe entre 35°C et 65°C
-- 🌡️ **Contrôle simple** sans thermorégulation ni sonde externe (comme un bouton de chaudière)
-- 📈 **Informations avancées** : pente/décalage thermorégulation, paramètres de zone
+### Chauffage
+- **Affichage en temps réel** des températures (départ, retour, pièce, extérieure)
+- **Réglage direct de la température de l'eau** en mode fixe entre 35°C et 65°C
+- **Contrôle simple** sans thermorégulation ni sonde externe (comme un bouton de chaudière)
+- **Informations avancées** : pente/décalage thermorégulation, paramètres de zone
 
-### 💧 Eau Chaude Sanitaire (ECS)
-- 🚰 **Contrôle température ECS** entre 35°C et 65°C
-- 🛁 **Mode confort** activable/désactivable
-- 🌡️ **Température antigel** en temps réel
-- 📊 **Statut ECS** détaillé
+### Eau Chaude Sanitaire (ECS)
+- **Contrôle température ECS** entre 35°C et 65°C
+- **Mode confort** activable/désactivable
+- **Température antigel** en temps réel
+- **Statut ECS** détaillé
 
-### 📊 État et Diagnostics
-- 🔥 **État flamme** et cycles d'allumage
-- 💨 **Vitesse ventilateur** en RPM
-- ⚙️ **Statut chaudière** complet (général, chauffage, SRA)
-- ⚠️ **Codes d'erreur** en temps réel
+### État et Diagnostics
+- **État flamme** et cycles d'allumage
+- **Vitesse ventilateur** en RPM
+- **Statut chaudière** complet (général, chauffage, SRA)
+- **Codes d'erreur** en temps réel
 
-### 🎨 Interface
-- 📑 **Interface à onglets** (Chauffage, Eau Chaude, État, Avancé)
-- ⚡ **Boutons +/-** et slider pour réglage précis
-- 🔄 **Actualisation automatique** toutes les 30 secondes
-- 📱 **Design responsive** optimisé pour mobile et desktop
-- 🌐 **Accès à distance sécurisé** via Tailscale VPN
-- 🔌 **Indicateur de connexion** en temps réel
-- ✅ **Messages de confirmation** pour chaque action
+### Interface
+- **Interface à onglets** (Chauffage, Eau Chaude, État, Avancé)
+- **Boutons +/-** et slider pour réglage précis
+- **Actualisation automatique** toutes les 30 secondes
+- **Design responsive** optimisé pour mobile et desktop
+- **Accès à distance sécurisé** via Tailscale VPN
+- **Indicateur de connexion** en temps réel
+- **Messages de confirmation** pour chaque action
 
-## 📸 Aperçu
+## Aperçu
 
 ```
 ┌─────────────────────────────────┐
-│  🔥 Contrôle Chaudière          │
+│  Contrôle Chaudière             │
 │  Chaffoteaux MIRA C GREEN 25    │
 ├─────────────────────────────────┤
 │  ● Connecté                     │
@@ -52,11 +52,11 @@ Interface web moderne pour contrôler votre chaudière **Chaffoteaux MIRA C GREE
 │         −     +                 │
 │  ═════●═════════════            │
 │  [Appliquer la température]    │
-│  [🔄 Actualiser]                │
+│  [Actualiser]                   │
 └─────────────────────────────────┘
 ```
 
-## 🛠️ Matériel requis
+## Matériel requis
 
 - **Raspberry Pi** (modèle 3, 4, ou Zero 2 W)
 - **eBUS Adapter Shield C6 Stick Edition** ([lien](https://adapter.ebusd.eu/v5-c6/stick.en.html))
@@ -65,7 +65,7 @@ Interface web moderne pour contrôler votre chaudière **Chaffoteaux MIRA C GREE
 - Alimentation USB pour Raspberry Pi
 - Câble USB pour l'adaptateur eBUS
 
-## 🚀 Installation rapide
+## Installation rapide
 
 ### Option 1 : Script automatique (recommandé)
 
@@ -84,7 +84,7 @@ chmod +x install.sh
 
 Consultez le fichier [INSTALLATION.md](docs/INSTALLATION.md) pour les instructions détaillées.
 
-## 📋 Configuration rapide
+## Configuration rapide
 
 1. **Connecter l'adaptateur eBUS**
    - Brancher l'adaptateur C6 Stick sur le Raspberry Pi
@@ -106,7 +106,7 @@ Consultez le fichier [INSTALLATION.md](docs/INSTALLATION.md) pour les instructio
    - Ouvrir un navigateur
    - Aller sur `http://[IP_RASPBERRY]:3000`
 
-## 🔧 Configuration
+## Configuration
 
 ### ebusd
 
@@ -124,7 +124,7 @@ Le serveur écoute par défaut sur le port **3000**. Pour changer le port, édit
 const PORT = 3000; // Modifier ici
 ```
 
-## 🌐 Accès à distance sécurisé avec Tailscale
+## Accès à distance sécurisé avec Tailscale
 
 **Recommandé** : Utilisez Tailscale pour un accès distant sécurisé sans ouvrir de ports sur votre box Internet.
 
@@ -143,22 +143,22 @@ http://100.xx.xx.xx:3000
 
 ### Avantages de Tailscale
 
-✅ **Sécurité maximale** - Chiffrement de bout en bout (WireGuard)
-✅ **Configuration simple** - Aucun port à ouvrir
-✅ **Authentification intégrée** - Zero Trust
-✅ **Gratuit** - Pour usage personnel
-✅ **Multi-plateforme** - iOS, Android, Windows, macOS, Linux
+- **Sécurité maximale** - Chiffrement de bout en bout (WireGuard)
+- **Configuration simple** - Aucun port à ouvrir
+- **Authentification intégrée** - Zero Trust
+- **Gratuit** - Pour usage personnel
+- **Multi-plateforme** - iOS, Android, Windows, macOS, Linux
 
-📖 **Guide complet** : Consultez [TAILSCALE.md](docs/TAILSCALE.md) pour les instructions détaillées.
+**Guide complet** : Consultez [TAILSCALE.md](docs/TAILSCALE.md) pour les instructions détaillées.
 
-## 📱 Utilisation Mobile
+## Utilisation Mobile
 
 L'interface est optimisée pour mobile et peut être ajoutée à l'écran d'accueil :
 
 - **iOS** : Safari → Partager → Sur l'écran d'accueil
 - **Android** : Chrome → Menu → Ajouter à l'écran d'accueil
 
-## 🧪 Commandes utiles
+## Commandes utiles
 
 ```bash
 # Vérifier le statut d'ebusd
@@ -182,7 +182,7 @@ sudo systemctl restart ebusd
 sudo systemctl restart chaudiere-control
 ```
 
-## 🐛 Dépannage
+## Dépannage
 
 ### ebusd ne démarre pas
 
@@ -218,7 +218,7 @@ sudo netstat -tuln | grep 3000
 curl http://localhost:3000
 ```
 
-## 📚 Documentation
+## Documentation
 
 - [Guide d'installation complet](docs/INSTALLATION.md)
 - [Accès à distance avec Tailscale](docs/TAILSCALE.md)
@@ -228,41 +228,41 @@ curl http://localhost:3000
 - [Wiki ebusd](https://github.com/john30/ebusd/wiki)
 - [Configurations eBUS](https://github.com/john30/ebusd-configuration)
 
-## ⚙️ Configuration BridgeNET
+## Configuration BridgeNET
 
 Cette interface utilise les commandes spécifiques au protocole **BridgeNET** de Chaffoteaux. Les noms de commandes sont basés sur le fichier CSV de [ysard/ebusd_configuration_chaffoteaux_bridgenet](https://github.com/ysard/ebusd_configuration_chaffoteaux_bridgenet/blob/master/mira_c_green.csv).
 
 **Important** : Si vous utilisez une configuration eBUS générique, les commandes peuvent être différentes. Consultez le fichier [COMMANDES_EBUS.md](docs/COMMANDES_EBUS.md) pour la liste complète des commandes utilisées.
 
-## 🔐 Sécurité
+## Sécurité
 
-⚠️ **Important** : Cette interface est basique et n'inclut pas d'authentification par défaut.
+**Important** : Cette interface est basique et n'inclut pas d'authentification par défaut.
 
 **Accès local uniquement** : Si vous n'accédez à l'interface que depuis votre réseau local (WiFi), aucune configuration supplémentaire n'est nécessaire.
 
 **Accès distant sécurisé** : Utilisez **Tailscale** (recommandé) :
-- ✅ Chiffrement de bout en bout automatique
-- ✅ Authentification intégrée
-- ✅ Aucun port exposé publiquement
-- 📖 Voir le [guide Tailscale](docs/TAILSCALE.md)
+- Chiffrement de bout en bout automatique
+- Authentification intégrée
+- Aucun port exposé publiquement
+- Voir le [guide Tailscale](docs/TAILSCALE.md)
 
 **Alternative pour usage avancé** :
 - Authentification (login/mot de passe) avec reverse proxy
 - Certificat SSL/HTTPS avec Let's Encrypt
 - Reverse proxy (nginx, Caddy) avec authentification basique
 
-## 🤝 Contribution
+## Contribution
 
 Les contributions sont les bienvenues ! N'hésitez pas à :
 - Signaler des bugs
 - Proposer des améliorations
 - Partager vos configurations
 
-## 📝 Licence
+## Licence
 
 MIT License - Libre d'utilisation et de modification
 
-## ⚠️ Avertissements
+## Avertissements
 
 - Utilisez cette interface à vos propres risques
 - Vérifiez que les modifications de température respectent les limites de votre installation
@@ -270,7 +270,7 @@ MIT License - Libre d'utilisation et de modification
 - Consultez le manuel de votre chaudière
 - Maintenez votre système à jour
 
-## 🎯 Roadmap
+## Roadmap
 
 - [x] Correction commandes eBUS pour Mira C Green BridgeNET
 - [x] Contrôle eau chaude sanitaire (DHW)
@@ -285,14 +285,14 @@ MIT License - Libre d'utilisation et de modification
 - [ ] Application mobile native
 - [ ] Intégration Home Assistant / MQTT
 
-## 📞 Support
+## Support
 
 En cas de problème :
-1. Consultez la section [Dépannage](#-dépannage)
+1. Consultez la section [Dépannage](#dépannage)
 2. Vérifiez les [issues GitHub](https://github.com/lesitevideo/chaudiere/issues)
 3. Consultez le forum ebusd
 
-## 🙏 Remerciements
+## Remerciements
 
 - [john30](https://github.com/john30) pour ebusd
 - La communauté eBUS
@@ -300,4 +300,4 @@ En cas de problème :
 
 ---
 
-Développé avec ❤️ pour faciliter le contrôle de votre chaudière
+Développé pour faciliter le contrôle de votre chaudière
