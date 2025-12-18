@@ -134,13 +134,15 @@ mkdir -p "$APP_DIR"
 echo ""
 echo "📄 Installation des fichiers de l'application..."
 
-if [ -f "chaudiere-control.html" ] && [ -f "server.js" ]; then
-    cp chaudiere-control.html "$APP_DIR/"
+if [ -f "server.js" ] && [ -f "package.json" ] && [ -d "public" ]; then
     cp server.js "$APP_DIR/"
+    cp package.json "$APP_DIR/"
+    cp -r public "$APP_DIR/"
     echo "✅ Fichiers copiés"
 else
-    echo "⚠️  Fichiers chaudiere-control.html et/ou server.js introuvables"
-    echo "   Copiez-les manuellement dans $APP_DIR/"
+    echo "⚠️  Fichiers server.js, package.json et/ou dossier public/ introuvables"
+    echo "   Assurez-vous d'exécuter le script depuis la racine du projet"
+    echo "   Ou copiez-les manuellement dans $APP_DIR/"
 fi
 
 # Création du service systemd
