@@ -31,7 +31,7 @@ Interface web moderne pour contrôler votre chaudière **Chaffoteaux MIRA C GREE
 - ⚡ **Boutons +/-** et slider pour réglage précis
 - 🔄 **Actualisation automatique** toutes les 30 secondes
 - 📱 **Design responsive** optimisé pour mobile et desktop
-- 🌐 **Accès à distance** via Internet (avec configuration Freebox)
+- 🌐 **Accès à distance sécurisé** via Tailscale VPN
 - 🔌 **Indicateur de connexion** en temps réel
 - ✅ **Messages de confirmation** pour chaque action
 
@@ -124,20 +124,32 @@ Le serveur écoute par défaut sur le port **3000**. Pour changer le port, édit
 const PORT = 3000; // Modifier ici
 ```
 
-## 🌐 Accès depuis Internet
+## 🌐 Accès à distance sécurisé avec Tailscale
 
-### Via Freebox Pop
+**Recommandé** : Utilisez Tailscale pour un accès distant sécurisé sans ouvrir de ports sur votre box Internet.
 
-1. Se connecter à l'interface Freebox : http://mafreebox.freebox.fr
-2. Aller dans **Gestion des ports**
-3. Ajouter une redirection :
-   - Port externe : 8080
-   - Port interne : 3000
-   - IP : Adresse du Raspberry Pi
+### Installation rapide Tailscale
 
-4. Accéder via : `http://[VOTRE_IP_PUBLIQUE]:8080`
+```bash
+# Sur le Raspberry Pi
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up
+```
 
-⚠️ **Sécurité** : Pour un usage en production, utilisez HTTPS et une authentification.
+Puis installez l'application Tailscale sur votre téléphone/ordinateur et accédez via :
+```
+http://100.xx.xx.xx:3000
+```
+
+### Avantages de Tailscale
+
+✅ **Sécurité maximale** - Chiffrement de bout en bout (WireGuard)
+✅ **Configuration simple** - Aucun port à ouvrir
+✅ **Authentification intégrée** - Zero Trust
+✅ **Gratuit** - Pour usage personnel
+✅ **Multi-plateforme** - iOS, Android, Windows, macOS, Linux
+
+📖 **Guide complet** : Consultez [TAILSCALE.md](docs/TAILSCALE.md) pour les instructions détaillées.
 
 ## 📱 Utilisation Mobile
 
@@ -209,6 +221,7 @@ curl http://localhost:3000
 ## 📚 Documentation
 
 - [Guide d'installation complet](docs/INSTALLATION.md)
+- [Accès à distance avec Tailscale](docs/TAILSCALE.md)
 - [Liste des commandes eBUS](docs/COMMANDES_EBUS.md)
 - [Configuration BridgeNET](https://github.com/ysard/ebusd_configuration_chaffoteaux_bridgenet)
 - [Documentation ebusd](https://github.com/john30/ebusd)
@@ -225,11 +238,18 @@ Cette interface utilise les commandes spécifiques au protocole **BridgeNET** de
 
 ⚠️ **Important** : Cette interface est basique et n'inclut pas d'authentification par défaut.
 
-Pour un usage en production :
-- Ajoutez une authentification (login/mot de passe)
-- Utilisez HTTPS avec un certificat SSL
-- Limitez l'accès par IP
-- Utilisez un VPN pour l'accès distant
+**Accès local uniquement** : Si vous n'accédez à l'interface que depuis votre réseau local (WiFi), aucune configuration supplémentaire n'est nécessaire.
+
+**Accès distant sécurisé** : Utilisez **Tailscale** (recommandé) :
+- ✅ Chiffrement de bout en bout automatique
+- ✅ Authentification intégrée
+- ✅ Aucun port exposé publiquement
+- 📖 Voir le [guide Tailscale](docs/TAILSCALE.md)
+
+**Alternative pour usage avancé** :
+- Authentification (login/mot de passe) avec reverse proxy
+- Certificat SSL/HTTPS avec Let's Encrypt
+- Reverse proxy (nginx, Caddy) avec authentification basique
 
 ## 🤝 Contribution
 

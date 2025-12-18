@@ -241,4 +241,54 @@ if [[ $REPLY =~ ^[Oo]$ ]]; then
     echo ""
 fi
 
+# Proposition d'installation Tailscale
+echo ""
+echo "══════════════════════════════════════════════════════════════"
+echo "   🔐 Accès distant sécurisé avec Tailscale"
+echo "══════════════════════════════════════════════════════════════"
+echo ""
+echo "Tailscale permet d'accéder à votre chaudière depuis n'importe où"
+echo "de manière sécurisée (chiffrement, authentification, sans ouvrir de ports)."
+echo ""
+read -p "Voulez-vous installer Tailscale maintenant ? (o/n) : " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Oo]$ ]]; then
+    echo ""
+    echo "📦 Installation de Tailscale..."
+    echo ""
+
+    # Installation via le script officiel
+    if curl -fsSL https://tailscale.com/install.sh | sh; then
+        echo ""
+        echo "✅ Tailscale installé avec succès"
+        echo ""
+        echo "🔧 Configuration de Tailscale..."
+        echo ""
+        echo "Exécutez cette commande pour connecter votre Raspberry Pi :"
+        echo ""
+        echo "   sudo tailscale up"
+        echo ""
+        echo "Puis ouvrez le lien qui s'affichera pour authentifier l'appareil."
+        echo ""
+        echo "📖 Guide complet : docs/TAILSCALE.md"
+        echo ""
+    else
+        echo ""
+        echo "❌ Erreur lors de l'installation de Tailscale"
+        echo "   Vous pouvez l'installer manuellement plus tard."
+        echo "   Consultez docs/TAILSCALE.md pour les instructions."
+        echo ""
+    fi
+else
+    echo ""
+    echo "💡 Vous pouvez installer Tailscale plus tard en suivant le guide :"
+    echo "   docs/TAILSCALE.md"
+    echo ""
+    echo "   Ou en exécutant :"
+    echo "   curl -fsSL https://tailscale.com/install.sh | sh"
+    echo ""
+fi
+
+echo "══════════════════════════════════════════════════════════════"
 echo "🎉 Installation terminée ! Accédez à l'interface via votre navigateur."
+echo "══════════════════════════════════════════════════════════════"
