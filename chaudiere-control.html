@@ -495,9 +495,9 @@
                 </div>
 
                 <div class="temp-control">
-                    <div class="temp-control-title">Température Zone 1</div>
+                    <div class="temp-control-title">Température Eau de Chauffage (Mode Fixe)</div>
                     <div class="temp-display">
-                        <h2 id="setTemp">20.0</h2>
+                        <h2 id="setTemp">50.0</h2>
                         <span style="font-size: 18px;">°C</span>
                     </div>
 
@@ -509,14 +509,14 @@
                     <input type="range"
                            id="tempSlider"
                            class="temp-slider"
-                           min="5"
-                           max="35"
-                           value="20"
+                           min="35"
+                           max="65"
+                           value="50"
                            step="0.5"
                            oninput="updateTempDisplay(this.value)">
                     <div class="temp-range">
-                        <span>5°C</span>
                         <span>35°C</span>
+                        <span>65°C</span>
                     </div>
                 </div>
 
@@ -704,7 +704,7 @@
         const EBUSD_HTTP_PORT = 8889;
         const EBUSD_API = `http://${EBUSD_HOST}:${EBUSD_HTTP_PORT}`;
 
-        let currentSetTemp = 20;
+        let currentSetTemp = 50;
         let currentDhwTemp = 50;
 
         // Initialisation
@@ -937,10 +937,10 @@
             try {
                 const temp = currentSetTemp.toFixed(1);
 
-                // Écrire la température de jour pour la zone 1
-                await ebusWrite('z1_day_temp', temp);
+                // Écrire la température fixe de l'eau de chauffage pour la zone 1
+                await ebusWrite('z1_fixed_temp', temp);
 
-                showMessage(`✓ Température chauffage réglée à ${temp}°C`, 'success');
+                showMessage(`✓ Température eau de chauffage réglée à ${temp}°C`, 'success');
 
                 // Actualiser le statut après 2 secondes
                 setTimeout(refreshStatus, 2000);

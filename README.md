@@ -10,8 +10,9 @@ Interface web moderne pour contrôler votre chaudière **Chaffoteaux MIRA C GREE
 
 ### 🔥 Chauffage
 - 📊 **Affichage en temps réel** des températures (départ, retour, pièce, extérieure)
-- 🎛️ **Réglage de la température Zone 1** entre 5°C et 35°C
-- 📈 **Informations avancées** : pente/décalage thermorégulation, températures jour/nuit/fixe
+- 🎛️ **Réglage direct de la température de l'eau** en mode fixe entre 35°C et 65°C
+- 🌡️ **Contrôle simple** sans thermorégulation ni sonde externe (comme un bouton de chaudière)
+- 📈 **Informations avancées** : pente/décalage thermorégulation, paramètres de zone
 
 ### 💧 Eau Chaude Sanitaire (ECS)
 - 🚰 **Contrôle température ECS** entre 35°C et 65°C
@@ -151,11 +152,11 @@ L'interface est optimisée pour mobile et peut être ajoutée à l'écran d'accu
 # Vérifier le statut d'ebusd
 sudo systemctl status ebusd
 
-# Lire la température actuelle
-ebusctl read FlowTemp
+# Lire la température de départ actuelle
+ebusctl read water_temp_out
 
-# Changer la température de consigne
-ebusctl write -c Hc1HeatSetTemp 21.5
+# Régler la température fixe de l'eau de chauffage
+ebusctl write z1_fixed_temp 50.0
 
 # Lister toutes les commandes disponibles
 ebusctl find

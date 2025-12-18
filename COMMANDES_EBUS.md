@@ -18,9 +18,11 @@ Ce document liste toutes les commandes eBUS utilisées dans l'interface web, bas
 ### Écriture (Write)
 | Commande | Description | Plage | Unité |
 |----------|-------------|-------|-------|
-| `z1_day_temp` | Température jour zone 1 | 5-35 | °C |
-| `z1_night_temp` | Température nuit zone 1 | 5-35 | °C |
-| `z1_fixed_temp` | Température fixe zone 1 | 5-35 | °C |
+| `z1_fixed_temp` | Température eau fixe zone 1 (mode fixe) | 35-65* | °C |
+| `z1_day_temp` | Température ambiante jour zone 1 (thermorégulation) | 5-35 | °C |
+| `z1_night_temp` | Température ambiante nuit zone 1 (thermorégulation) | 5-35 | °C |
+
+**Important :** L'interface utilise `z1_fixed_temp` pour contrôler directement la température de l'eau de chauffage en mode fixe (sans thermorégulation). La plage recommandée est 35-65°C pour des radiateurs classiques. Pour un mode basse température (plancher chauffant), utiliser 20-45°C.
 
 ## 💧 Eau Chaude Sanitaire (DHW)
 
