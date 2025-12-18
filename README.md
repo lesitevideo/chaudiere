@@ -53,7 +53,7 @@ Interface web moderne pour contrôler votre chaudière **Chaffoteaux MIRA C GREE
 
 ```bash
 # Télécharger le script d'installation
-wget https://raw.githubusercontent.com/votre-repo/chaudiere-control/main/install.sh
+wget https://raw.githubusercontent.com/lesitevideo/chaudiere/main/install.sh
 
 # Rendre le script exécutable
 chmod +x install.sh
@@ -239,7 +239,7 @@ MIT License - Libre d'utilisation et de modification
 
 En cas de problème :
 1. Consultez la section [Dépannage](#-dépannage)
-2. Vérifiez les [issues GitHub](https://github.com/votre-repo/issues)
+2. Vérifiez les [issues GitHub](https://github.com/lesitevideo/chaudiere/issues)
 3. Consultez le forum ebusd
 
 ## 🙏 Remerciements
