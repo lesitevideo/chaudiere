@@ -1,0 +1,26 @@
+{
+  "name": "chaudiere-control",
+  "version": "1.0.0",
+  "description": "Interface web pour contrôler une chaudière Chaffoteaux via eBUS",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "ebus",
+    "chaudiere",
+    "chaffoteaux",
+    "heating",
+    "boiler",
+    "iot"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  }
+}

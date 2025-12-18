@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contrôle Chaudière Chaffoteaux</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .status-row:last-child {
+            border-bottom: none;
+        }
+
+        .status-label {
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-value {
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .temp-control {
+            background: #fff;
+            border: 2px solid #667eea;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .temp-display {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .temp-display h2 {
+            color: #667eea;
+            font-size: 48px;
+            font-weight: 700;
+        }
+
+        .temp-display span {
+            color: #999;
+            font-size: 18px;
+        }
+
+        .temp-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .temp-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .temp-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .temp-btn:active {
+            transform: translateY(0);
+        }
+
+        .temp-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .temp-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+        }
+
+        .temp-slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .error {
+            background: #ff4444;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .connection-status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .connection-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .connected .status-dot {
+            background: #28a745;
+        }
+
+        .disconnected .status-dot {
+            background: #dc3545;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .temp-display h2 {
+                font-size: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 Contrôle Chaudière</h1>
+        <p class="subtitle">Chaffoteaux MIRA C GREEN 25</p>
+
+        <div id="connectionStatus" class="connection-status disconnected">
+            <div class="status-dot"></div>
+            <span>Déconnecté</span>
+        </div>
+
+        <div id="error" class="error"></div>
+        <div id="loading" class="loading">⏳ Chargement...</div>
+
+        <div class="status-card">
+            <div class="status-row">
+                <span class="status-label">Température actuelle</span>
+                <span class="status-value" id="currentTemp">--°C</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">Température cible</span>
+                <span class="status-value" id="targetTemp">--°C</span>
+            </div>
+            <div class="status-row">
+                <span class="status-label">État</span>
+                <span class="status-value" id="boilerStatus">--</span>
+            </div>
+        </div>
+
+        <div class="temp-control">
+            <div class="temp-display">
+                <h2 id="setTemp">20</h2>
+                <span>°C</span>
+            </div>
+
+            <div class="temp-buttons">
+                <button class="temp-btn" onclick="adjustTemp(-1)">−</button>
+                <button class="temp-btn" onclick="adjustTemp(1)">+</button>
+            </div>
+
+            <input type="range" 
+                   id="tempSlider" 
+                   class="temp-slider" 
+                   min="15" 
+                   max="30" 
+                   value="20" 
+                   step="0.5"
+                   oninput="updateTempDisplay(this.value)">
+        </div>
+
+        <button class="action-btn btn-primary" onclick="setTemperature()">
+            ✓ Appliquer la température
+        </button>
+
+        <button class="action-btn btn-secondary" onclick="refreshStatus()">
+            🔄 Actualiser
+        </button>
+    </div>
+
+    <script>
+        // Configuration - À MODIFIER avec l'IP de votre Raspberry Pi
+        const EBUSD_HOST = window.location.hostname || 'localhost';
+        const EBUSD_HTTP_PORT = 8889;
+        const EBUSD_API = `http://${EBUSD_HOST}:${EBUSD_HTTP_PORT}`;
+
+        let currentSetTemp = 20;
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshStatus();
+            // Actualisation automatique toutes les 30 secondes
+            setInterval(refreshStatus, 30000);
+        });
+
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('show', show);
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+            setTimeout(() => errorDiv.classList.remove('show'), 5000);
+        }
+
+        function updateConnectionStatus(connected) {
+            const statusDiv = document.getElementById('connectionStatus');
+            if (connected) {
+                statusDiv.className = 'connection-status connected';
+                statusDiv.innerHTML = '<div class="status-dot"></div><span>Connecté</span>';
+            } else {
+                statusDiv.className = 'connection-status disconnected';
+                statusDiv.innerHTML = '<div class="status-dot"></div><span>Déconnecté</span>';
+            }
+        }
+
+        function updateTempDisplay(value) {
+            currentSetTemp = parseFloat(value);
+            document.getElementById('setTemp').textContent = currentSetTemp.toFixed(1);
+        }
+
+        function adjustTemp(delta) {
+            const slider = document.getElementById('tempSlider');
+            let newValue = parseFloat(slider.value) + delta;
+            newValue = Math.max(15, Math.min(30, newValue));
+            slider.value = newValue;
+            updateTempDisplay(newValue);
+        }
+
+        async function ebusCommand(command) {
+            try {
+                const response = await fetch(`${EBUSD_API}/data/${command}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'text/plain'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.text();
+                return data.trim();
+            } catch (error) {
+                console.error('Erreur eBUS:', error);
+                throw error;
+            }
+        }
+
+        async function refreshStatus() {
+            showLoading(true);
+            
+            try {
+                // Commandes pour récupérer les informations de la chaudière
+                // Ces commandes peuvent varier selon votre modèle exact
+                // Consultez la documentation ebusd pour votre chaudière
+                
+                // Température de consigne du chauffage
+                const hcSetTemp = await ebusCommand('Hc1HeatSetTemp');
+                if (hcSetTemp && hcSetTemp !== '-') {
+                    document.getElementById('targetTemp').textContent = hcSetTemp + '°C';
+                    document.getElementById('tempSlider').value = parseFloat(hcSetTemp);
+                    updateTempDisplay(parseFloat(hcSetTemp));
+                }
+                
+                // Température actuelle de l'eau
+                const flowTemp = await ebusCommand('FlowTemp');
+                if (flowTemp && flowTemp !== '-') {
+                    document.getElementById('currentTemp').textContent = flowTemp + '°C';
+                }
+                
+                // État de la chaudière
+                const status = await ebusCommand('Status01');
+                document.getElementById('boilerStatus').textContent = 
+                    status && status !== '-' ? status : 'Inconnu';
+                
+                updateConnectionStatus(true);
+            } catch (error) {
+                console.error('Erreur lors de la récupération du statut:', error);
+                updateConnectionStatus(false);
+                showError('Impossible de se connecter à la chaudière. Vérifiez que ebusd est démarré.');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function setTemperature() {
+            showLoading(true);
+            
+            try {
+                // Commande pour définir la température de consigne
+                // Format: /data/CIRCUIT/write?VALUE
+                const temp = currentSetTemp.toFixed(1);
+                
+                const response = await fetch(
+                    `${EBUSD_API}/data/Hc1HeatSetTemp/write?${temp}`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'text/plain'
+                        }
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP! status: ${response.status}`);
+                }
+                
+                const result = await response.text();
+                console.log('Résultat:', result);
+                
+                // Afficher un message de succès
+                const errorDiv = document.getElementById('error');
+                errorDiv.style.background = '#28a745';
+                errorDiv.textContent = `✓ Température réglée à ${temp}°C`;
+                errorDiv.classList.add('show');
+                setTimeout(() => errorDiv.classList.remove('show'), 3000);
+                
+                // Actualiser le statut après 2 secondes
+                setTimeout(refreshStatus, 2000);
+                
+            } catch (error) {
+                console.error('Erreur lors du réglage de la température:', error);
+                showError('Erreur lors du réglage de la température. Veuillez réessayer.');
+            } finally {
+                showLoading(false);
+            }
+        }
+    </script>
+</body>
+</html>

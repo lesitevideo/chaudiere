@@ -1,0 +1,17 @@
+[Unit]
+Description=Interface Web Controle Chaudiere
+After=network.target ebusd.service
+Requires=ebusd.service
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/chaudiere-control
+ExecStart=/usr/bin/node /home/pi/chaudiere-control/server.js
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
