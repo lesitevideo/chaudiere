@@ -87,14 +87,23 @@ echo "🔌 Détection de l'adaptateur eBUS..."
 USB_DEVICE=""
 if [ -e /dev/ttyUSB0 ]; then
     USB_DEVICE="/dev/ttyUSB0"
-    echo "✅ Adaptateur trouvé : $USB_DEVICE"
+    echo "✅ Adaptateur trouvé : $USB_DEVICE (FTDI)"
 elif [ -e /dev/ttyUSB1 ]; then
     USB_DEVICE="/dev/ttyUSB1"
-    echo "✅ Adaptateur trouvé : $USB_DEVICE"
+    echo "✅ Adaptateur trouvé : $USB_DEVICE (FTDI)"
+elif [ -e /dev/ttyACM0 ]; then
+    USB_DEVICE="/dev/ttyACM0"
+    echo "✅ Adaptateur trouvé : $USB_DEVICE (ESP32)"
+elif [ -e /dev/ttyACM1 ]; then
+    USB_DEVICE="/dev/ttyACM1"
+    echo "✅ Adaptateur trouvé : $USB_DEVICE (ESP32)"
 else
     echo "⚠️  Aucun adaptateur USB détecté automatiquement"
     echo "   Branchez l'adaptateur eBUS et relancez le script"
     echo "   Ou continuez et configurez manuellement dans /etc/default/ebusd"
+    echo ""
+    echo "   Périphériques série disponibles :"
+    ls -1 /dev/tty{USB,ACM}* 2>/dev/null || echo "   Aucun"
     USB_DEVICE="/dev/ttyUSB0"
 fi
 
