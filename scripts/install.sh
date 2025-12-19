@@ -37,8 +37,8 @@ OS_VERSION=$(lsb_release -cs)
 echo "   Version OS : $OS_VERSION"
 
 # URL de téléchargement ebusd
-EBUSD_VERSION="23.3"
-EBUSD_URL="https://github.com/john30/ebusd/releases/download/v${EBUSD_VERSION}/ebusd-${EBUSD_VERSION}-raspberrypi_${OS_VERSION}_${ARCH}.deb"
+EBUSD_VERSION="25.1"
+EBUSD_URL="https://github.com/john30/ebusd/releases/download/${EBUSD_VERSION}/ebusd-${EBUSD_VERSION}_${ARCH}-${OS_VERSION}.deb"
 
 echo "   Téléchargement depuis : $EBUSD_URL"
 
