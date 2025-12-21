@@ -1,47 +1,33 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execFileSync } = require('node:child_process');
 
 const PORT = 3000;
 const HOSTNAME = '0.0.0.0';
 const EBUSD_HOST = 'localhost';
 const EBUSD_PORT = 8889;
 
-// Configuration GPIO relais
+// Configuration GPIO relais (même config que relay.js)
 const GPIO_CHIP = 'gpiochip0';
 const GPIO_LINE = 14;
 const ACTIVE_LOW = true; // 0 = ON, 1 = OFF
 
-// Initialiser le GPIO en mode ligne (persistant)
-try {
-    // Export du GPIO via sysfs pour le rendre persistant
-    execSync(`gpioset -m signal -b ${GPIO_CHIP} ${GPIO_LINE}=1 &`, { shell: true });
-    console.log(`GPIO${GPIO_LINE} initialisé`);
-} catch (error) {
-    console.error(`Erreur initialisation GPIO${GPIO_LINE}:`, error.message);
+// Fonctions de contrôle du relais (code de relay.js)
+function gpioset(value) {
+    execFileSync('gpioset', ['-m', 'exit', GPIO_CHIP, `${GPIO_LINE}=${value}`], { stdio: 'inherit' });
 }
 
-// Fonctions de contrôle du relais
 function setRelay(on) {
     const value = ACTIVE_LOW ? (on ? 0 : 1) : (on ? 1 : 0);
-    try {
-        // Utiliser gpioset avec mode signal pour maintenir l'état
-        // On tue d'abord les anciens process gpioset pour cette ligne
-        execSync(`pkill -f "gpioset.*${GPIO_LINE}" 2>/dev/null || true`);
-        // Puis on lance le nouveau en background
-        execSync(`gpioset -m signal -b ${GPIO_CHIP} ${GPIO_LINE}=${value} &`, { shell: true });
-        console.log(`Relais ${on ? 'ON' : 'OFF'} (GPIO${GPIO_LINE}=${value})`);
-        return true;
-    } catch (error) {
-        console.error('Erreur GPIO:', error.message);
-        throw error;
-    }
+    gpioset(value);
+    console.log(`Relais ${on ? 'ON' : 'OFF'} (GPIO${GPIO_LINE}=${value})`);
+    return true;
 }
 
 function getRelayState() {
     try {
-        const output = execSync(`gpioget ${GPIO_CHIP} ${GPIO_LINE}`).toString().trim();
+        const output = execFileSync('gpioget', [GPIO_CHIP, `${GPIO_LINE}`]).toString().trim();
         const value = parseInt(output);
         const isOn = ACTIVE_LOW ? (value === 0) : (value === 1);
         return isOn;
@@ -164,19 +150,8 @@ server.listen(PORT, HOSTNAME, () => {
     console.log(`\n═══════════════════════════════════════════════════════\n`);
 });
 
-// Nettoyage des process gpioset à l'arrêt
-function cleanup() {
-    try {
-        console.log('Nettoyage des process GPIO...');
-        execSync(`pkill -f "gpioset.*${GPIO_LINE}" 2>/dev/null || true`);
-    } catch (error) {
-        // Ignorer les erreurs de nettoyage
-    }
-}
-
 process.on('SIGTERM', () => {
     console.log('Arrêt du serveur...');
-    cleanup();
     server.close(() => {
         console.log('Serveur arrêté');
         process.exit(0);
@@ -185,7 +160,6 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
     console.log('\nArrêt demandé (Ctrl+C)');
-    cleanup();
     server.close(() => {
         process.exit(0);
     });
@@ -193,6 +167,5 @@ process.on('SIGINT', () => {
 
 process.on('uncaughtException', (error) => {
     console.error('Erreur non gérée:', error);
-    cleanup();
     process.exit(1);
 });
