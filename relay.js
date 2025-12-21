@@ -1,19 +1,30 @@
 #!/usr/bin/env node
 'use strict';
 
-const { execFileSync } = require('node:child_process');
+const { execSync } = require('node:child_process');
+const { spawn } = require('node:child_process');
 
 const CHIP = 'gpiochip0';
 const LINE = 14;         // GPIO14
 const ACTIVE_LOW = true; // confirmé par ton test: 0 = ON, 1 = OFF
 
-function gpioset(value) {
-  execFileSync('gpioset', ['-m', 'exit', CHIP, `${LINE}=${value}`], { stdio: 'inherit' });
-}
-
 function setRelay(on) {
   const value = ACTIVE_LOW ? (on ? 0 : 1) : (on ? 1 : 0);
-  gpioset(value);
+
+  // Tuer les anciens processus gpioset pour cette ligne
+  try {
+    execSync(`pkill -f "gpioset.*${LINE}"`);
+  } catch (e) {
+    // Ignorer si aucun processus à tuer
+  }
+
+  // Lancer gpioset en mode signal (maintient le GPIO)
+  const child = spawn('gpioset', ['-m', 'signal', CHIP, `${LINE}=${value}`], {
+    detached: true,
+    stdio: 'ignore'
+  });
+  child.unref(); // Détacher du processus parent
+
   console.log(`Relais ${on ? 'ON' : 'OFF'} (GPIO14=${value})`);
 }
 
