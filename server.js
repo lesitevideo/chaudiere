@@ -1,35 +1,34 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { execFileSync } = require('node:child_process');
+const { execSync } = require('child_process');
 
 const PORT = 3000;
 const HOSTNAME = '0.0.0.0';
 const EBUSD_HOST = 'localhost';
 const EBUSD_PORT = 8889;
 
-// Configuration GPIO relais (même config que relay.js)
-const GPIO_CHIP = 'gpiochip0';
-const GPIO_LINE = 14;
-const ACTIVE_LOW = true; // 0 = ON, 1 = OFF
+// Chemin vers relay.js
+const RELAY_SCRIPT = path.join(__dirname, 'relay.js');
 
-// Fonctions de contrôle du relais (code de relay.js)
-function gpioset(value) {
-    execFileSync('gpioset', ['-m', 'exit', GPIO_CHIP, `${GPIO_LINE}=${value}`], { stdio: 'inherit' });
-}
-
+// Fonctions de contrôle du relais - appel direct de relay.js
 function setRelay(on) {
-    const value = ACTIVE_LOW ? (on ? 0 : 1) : (on ? 1 : 0);
-    gpioset(value);
-    console.log(`Relais ${on ? 'ON' : 'OFF'} (GPIO${GPIO_LINE}=${value})`);
-    return true;
+    const command = on ? 'on' : 'off';
+    try {
+        execSync(`sudo node ${RELAY_SCRIPT} ${command}`, { stdio: 'inherit' });
+        console.log(`Relais ${on ? 'ON' : 'OFF'}`);
+        return true;
+    } catch (error) {
+        console.error('Erreur relais:', error.message);
+        throw error;
+    }
 }
 
 function getRelayState() {
     try {
-        const output = execFileSync('gpioget', [GPIO_CHIP, `${GPIO_LINE}`]).toString().trim();
+        const output = execSync('sudo gpioget gpiochip0 14').toString().trim();
         const value = parseInt(output);
-        const isOn = ACTIVE_LOW ? (value === 0) : (value === 1);
+        const isOn = (value === 0); // Active-low
         return isOn;
     } catch (error) {
         console.error('Erreur lecture GPIO:', error.message);
