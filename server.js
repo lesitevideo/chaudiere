@@ -8,15 +8,16 @@ const HOSTNAME = '0.0.0.0';
 const EBUSD_HOST = 'localhost';
 const EBUSD_PORT = 8889;
 
-// Chemin vers relay.js
-const RELAY_SCRIPT = path.join(__dirname, 'relay.js');
+// Configuration GPIO relais
+const GPIO_PIN = 14;
 
-// Fonctions de contrôle du relais - appel direct de relay.js
+// Fonctions de contrôle du relais - utilise raspi-gpio directement
 function setRelay(on) {
-    const command = on ? 'on' : 'off';
+    // Active-low: ON => drive low (dl), OFF => drive high (dh)
+    const level = on ? 'dl' : 'dh';
     try {
-        execSync(`sudo node ${RELAY_SCRIPT} ${command}`, { stdio: 'inherit' });
-        console.log(`Relais ${on ? 'ON' : 'OFF'}`);
+        execSync(`sudo raspi-gpio set ${GPIO_PIN} op ${level}`, { stdio: 'inherit' });
+        console.log(`Relais ${on ? 'ON' : 'OFF'} (GPIO${GPIO_PIN}=${level})`);
         return true;
     } catch (error) {
         console.error('Erreur relais:', error.message);
@@ -26,10 +27,15 @@ function setRelay(on) {
 
 function getRelayState() {
     try {
-        const output = execSync('sudo gpioget gpiochip0 14').toString().trim();
-        const value = parseInt(output);
-        const isOn = (value === 0); // Active-low
-        return isOn;
+        const output = execSync(`sudo raspi-gpio get ${GPIO_PIN}`).toString();
+        // Format: "GPIO 14: level=0 fsel=1 func=OUTPUT"
+        const match = output.match(/level=(\d+)/);
+        if (match) {
+            const level = parseInt(match[1]);
+            const isOn = (level === 0); // Active-low: 0 = ON
+            return isOn;
+        }
+        return null;
     } catch (error) {
         console.error('Erreur lecture GPIO:', error.message);
         return null;
