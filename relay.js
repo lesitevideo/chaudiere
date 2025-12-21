@@ -2,7 +2,6 @@
 'use strict';
 
 const { execSync } = require('node:child_process');
-const { spawn } = require('node:child_process');
 
 const CHIP = 'gpiochip0';
 const LINE = 14;         // GPIO14
@@ -13,17 +12,15 @@ function setRelay(on) {
 
   // Tuer les anciens processus gpioset pour cette ligne
   try {
-    execSync(`pkill -f "gpioset.*${LINE}"`);
+    execSync(`pkill -f "gpioset.*gpiochip0.*${LINE}="`);
   } catch (e) {
     // Ignorer si aucun processus à tuer
   }
 
-  // Lancer gpioset en mode signal (maintient le GPIO)
-  const child = spawn('gpioset', ['-m', 'signal', CHIP, `${LINE}=${value}`], {
-    detached: true,
-    stdio: 'ignore'
-  });
-  child.unref(); // Détacher du processus parent
+  // Lancer gpioset en arrière-plan via bash/nohup pour vraie persistance
+  // setsid détache complètement du terminal/session
+  const cmd = `setsid gpioset -m signal ${CHIP} ${LINE}=${value} >/dev/null 2>&1 &`;
+  execSync(cmd, { shell: '/bin/bash' });
 
   console.log(`Relais ${on ? 'ON' : 'OFF'} (GPIO14=${value})`);
 }
