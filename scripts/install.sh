@@ -37,8 +37,8 @@ OS_VERSION=$(lsb_release -cs)
 echo "   Version OS : $OS_VERSION"
 
 # URL de téléchargement ebusd
-EBUSD_VERSION="23.3"
-EBUSD_URL="https://github.com/john30/ebusd/releases/download/v${EBUSD_VERSION}/ebusd-${EBUSD_VERSION}-raspberrypi_${OS_VERSION}_${ARCH}.deb"
+EBUSD_VERSION="25.1"
+EBUSD_URL="https://github.com/john30/ebusd/releases/download/${EBUSD_VERSION}/ebusd-${EBUSD_VERSION}_${ARCH}-${OS_VERSION}.deb"
 
 echo "   Téléchargement depuis : $EBUSD_URL"
 
@@ -49,23 +49,32 @@ wget -q --show-progress "$EBUSD_URL" -O /tmp/ebusd.deb || {
     exit 1
 }
 
-sudo dpkg -i /tmp/ebusd.deb || sudo apt --fix-broken install -y
+sudo dpkg -i /tmp/ebusd.deb
+DPKG_RESULT=$?
+
+# Si dpkg échoue, tenter de corriger les dépendances
+if [ $DPKG_RESULT -ne 0 ]; then
+    echo "⚠️  Installation incomplète, correction des dépendances..."
+    sudo apt --fix-broken install -y
+fi
+
 rm /tmp/ebusd.deb
 
 # Vérification de l'installation ebusd
 if ! command -v ebusctl &> /dev/null; then
     echo "❌ Erreur : ebusd n'a pas été installé correctement"
+    echo "   Vérifiez les logs ci-dessus pour plus de détails"
     exit 1
 fi
 
-echo "✅ ebusd installé avec succès"
+echo "✅ ebusd installé avec succès (version $(ebusd --version 2>&1 | head -1))"
 
 # Installation de Node.js
 echo ""
 echo "🔧 Installation de Node.js..."
 
 if ! command -v node &> /dev/null; then
-    curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
     sudo apt install -y nodejs
 else
     echo "   Node.js est déjà installé ($(node --version))"
@@ -78,14 +87,23 @@ echo "🔌 Détection de l'adaptateur eBUS..."
 USB_DEVICE=""
 if [ -e /dev/ttyUSB0 ]; then
     USB_DEVICE="/dev/ttyUSB0"
-    echo "✅ Adaptateur trouvé : $USB_DEVICE"
+    echo "✅ Adaptateur trouvé : $USB_DEVICE (FTDI)"
 elif [ -e /dev/ttyUSB1 ]; then
     USB_DEVICE="/dev/ttyUSB1"
-    echo "✅ Adaptateur trouvé : $USB_DEVICE"
+    echo "✅ Adaptateur trouvé : $USB_DEVICE (FTDI)"
+elif [ -e /dev/ttyACM0 ]; then
+    USB_DEVICE="/dev/ttyACM0"
+    echo "✅ Adaptateur trouvé : $USB_DEVICE (ESP32)"
+elif [ -e /dev/ttyACM1 ]; then
+    USB_DEVICE="/dev/ttyACM1"
+    echo "✅ Adaptateur trouvé : $USB_DEVICE (ESP32)"
 else
     echo "⚠️  Aucun adaptateur USB détecté automatiquement"
     echo "   Branchez l'adaptateur eBUS et relancez le script"
     echo "   Ou continuez et configurez manuellement dans /etc/default/ebusd"
+    echo ""
+    echo "   Périphériques série disponibles :"
+    ls -1 /dev/tty{USB,ACM}* 2>/dev/null || echo "   Aucun"
     USB_DEVICE="/dev/ttyUSB0"
 fi
 
@@ -106,7 +124,15 @@ echo "✅ Configuration d'ebusd créée"
 echo ""
 echo "👤 Configuration des permissions..."
 sudo usermod -a -G dialout $USER
-sudo usermod -a -G dialout ebusd
+
+# Vérifier que l'utilisateur ebusd existe avant de l'ajouter au groupe
+if id "ebusd" &>/dev/null; then
+    sudo usermod -a -G dialout ebusd
+    echo "✅ Utilisateur ebusd ajouté au groupe dialout"
+else
+    echo "⚠️  L'utilisateur ebusd n'a pas été créé par le package"
+    echo "   Cela peut être normal selon la version d'ebusd"
+fi
 
 # Démarrage d'ebusd
 echo ""

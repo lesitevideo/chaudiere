@@ -70,15 +70,20 @@ Interface web moderne pour contrôler votre chaudière **Chaffoteaux MIRA C GREE
 ### Option 1 : Script automatique (recommandé)
 
 ```bash
-# Télécharger le script d'installation
-wget https://raw.githubusercontent.com/lesitevideo/chaudiere/main/scripts/install.sh
+# Cloner le repository
+git clone https://github.com/lesitevideo/chaudiere.git
+cd chaudiere
 
-# Rendre le script exécutable
-chmod +x install.sh
-
-# Lancer l'installation
-./install.sh
+# Lancer le script d'installation
+./scripts/install.sh
 ```
+
+Le script installera automatiquement :
+- ebusd 25.1
+- Node.js 20.x
+- L'interface web de contrôle
+- Les services systemd
+- Optionnellement : Tailscale pour l'accès distant
 
 ### Option 2 : Installation manuelle
 
