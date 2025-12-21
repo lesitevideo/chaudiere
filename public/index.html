@@ -156,6 +156,80 @@
             color: white;
         }
 
+        .control-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 30px;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .control-title {
+            text-align: center;
+            font-size: 16px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .temp-display {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .temp-display h2 {
+            font-size: 56px;
+            font-weight: 700;
+        }
+
+        .temp-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .temp-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 28px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .temp-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .temp-slider {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .apply-btn {
+            background: rgba(255, 255, 255, 0.9);
+            color: #667eea;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .apply-btn:hover {
+            background: white;
+            transform: scale(1.05);
+        }
+
         .section {
             margin-bottom: 30px;
         }
@@ -169,33 +243,88 @@
             border-bottom: 3px solid #667eea;
         }
 
-        .loading {
-            text-align: center;
-            padding: 40px;
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
         }
 
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+        .info-label {
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: #333;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 30px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        input:checked + .toggle-slider {
+            background-color: #28a745;
         }
 
-        .error-message {
-            background: #dc3545;
-            color: white;
-            padding: 20px;
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+
+        .message {
+            padding: 15px;
             border-radius: 10px;
-            margin: 20px 0;
+            margin: 15px 0;
             text-align: center;
+            font-weight: 500;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
         }
 
         .refresh-btn {
@@ -214,34 +343,6 @@
 
         .refresh-btn:hover {
             transform: scale(1.05);
-        }
-
-        .refresh-btn:active {
-            transform: scale(0.95);
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #e0e0e0;
-        }
-
-        .info-row:last-child {
-            border-bottom: none;
-        }
-
-        .info-label {
-            color: #666;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .info-value {
-            color: #333;
-            font-size: 16px;
-            font-weight: 700;
         }
 
         .footer {
@@ -264,102 +365,126 @@
         </div>
 
         <div class="content">
-            <div id="loadingIndicator" class="loading" style="display: none;">
-                <div class="spinner"></div>
-                <p>Chargement des données...</p>
-            </div>
-
-            <div id="errorContainer"></div>
+            <div id="messageContainer"></div>
 
             <button class="refresh-btn" onclick="loadData()">🔄 Actualiser</button>
 
-            <div id="dataContainer" style="display: none;">
-                <!-- État Chaudière -->
-                <div class="section">
-                    <h2 class="section-title">📊 État Chaudière</h2>
-                    <div class="status-grid">
-                        <div class="status-card">
-                            <div class="status-card-title">Statut</div>
-                            <div id="boilerStatus" class="status-badge">--</div>
+            <!-- Contrôles Température -->
+            <div class="section">
+                <h2 class="section-title">🎛️ Contrôles</h2>
+                
+                <div class="control-card">
+                    <div class="control-title">Température Zone 1 (Chauffage)</div>
+                    <div class="temp-display">
+                        <h2><span id="z1TempControl">20.0</span>°C</h2>
+                    </div>
+                    <div class="temp-controls">
+                        <button class="temp-btn" onclick="adjustZ1Temp(-0.5)">-</button>
+                        <input type="range" class="temp-slider" id="z1Slider" 
+                               min="35" max="65" step="0.5" value="52"
+                               oninput="updateZ1Display(this.value)">
+                        <button class="temp-btn" onclick="adjustZ1Temp(0.5)">+</button>
+                    </div>
+                    <button class="apply-btn" onclick="setZ1Temp()">✓ Appliquer</button>
+                </div>
+
+                <div class="control-card">
+                    <div class="control-title">Température Eau Chaude Sanitaire</div>
+                    <div class="temp-display">
+                        <h2><span id="dhwTempControl">55.0</span>°C</h2>
+                    </div>
+                    <div class="temp-controls">
+                        <button class="temp-btn" onclick="adjustDhwTemp(-0.5)">-</button>
+                        <input type="range" class="temp-slider" id="dhwSlider" 
+                               min="35" max="65" step="0.5" value="55"
+                               oninput="updateDhwDisplay(this.value)">
+                        <button class="temp-btn" onclick="adjustDhwTemp(0.5)">+</button>
+                    </div>
+                    <button class="apply-btn" onclick="setDhwTemp()">✓ Appliquer</button>
+                </div>
+            </div>
+
+            <!-- État Chaudière -->
+            <div class="section">
+                <h2 class="section-title">📊 État Chaudière</h2>
+                <div class="status-grid">
+                    <div class="status-card">
+                        <div class="status-card-title">Statut</div>
+                        <div id="boilerStatus" class="status-badge">--</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-card-title">Zone 1 Chauffage</div>
+                        <div id="z1HeatRequest" class="status-badge">--</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-card-title">Zone 2 Chauffage</div>
+                        <div id="z2HeatRequest" class="status-badge">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Températures -->
+            <div class="section">
+                <h2 class="section-title">🌡️ Températures</h2>
+                <div class="status-grid">
+                    <div class="status-card">
+                        <div class="status-card-title">Eau Chaude Sanitaire</div>
+                        <div class="status-card-value">
+                            <span id="dhwTemp">--</span>
+                            <span class="status-card-unit">°C</span>
                         </div>
-                        <div class="status-card">
-                            <div class="status-card-title">Zone 1 Chauffage</div>
-                            <div id="z1HeatRequest" class="status-badge">--</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-card-title">Consigne Zone 1</div>
+                        <div class="status-card-value">
+                            <span id="z1TargetTemp">--</span>
+                            <span class="status-card-unit">°C</span>
                         </div>
-                        <div class="status-card">
-                            <div class="status-card-title">Zone 2 Chauffage</div>
-                            <div id="z2HeatRequest" class="status-badge">--</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-card-title">Consigne Zone 2</div>
+                        <div class="status-card-value">
+                            <span id="z2TargetTemp">--</span>
+                            <span class="status-card-unit">°C</span>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Températures -->
-                <div class="section">
-                    <h2 class="section-title">🌡️ Températures</h2>
-                    <div class="status-grid">
-                        <div class="status-card">
-                            <div class="status-card-title">Eau Chaude Sanitaire</div>
-                            <div class="status-card-value">
-                                <span id="dhwTemp">--</span>
-                                <span class="status-card-unit">°C</span>
-                            </div>
-                        </div>
-                        <div class="status-card">
-                            <div class="status-card-title">Consigne Zone 1</div>
-                            <div class="status-card-value">
-                                <span id="z1TargetTemp">--</span>
-                                <span class="status-card-unit">°C</span>
-                            </div>
-                        </div>
-                        <div class="status-card">
-                            <div class="status-card-title">Consigne Zone 2</div>
-                            <div class="status-card-value">
-                                <span id="z2TargetTemp">--</span>
-                                <span class="status-card-unit">°C</span>
-                            </div>
-                        </div>
-                        <div class="status-card">
-                            <div class="status-card-title">Consigne Zone 3</div>
-                            <div class="status-card-value">
-                                <span id="z3TargetTemp">--</span>
-                                <span class="status-card-unit">°C</span>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Mode Comfort DHW -->
+            <div class="section">
+                <h2 class="section-title">💧 Eau Chaude Sanitaire</h2>
+                <div class="info-row">
+                    <span class="info-label">Mode Comfort</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="dhwComfort" onchange="toggleDhwComfort()">
+                        <span class="toggle-slider"></span>
+                    </label>
                 </div>
-
-                <!-- Mode Comfort DHW -->
-                <div class="section">
-                    <h2 class="section-title">💧 Eau Chaude Sanitaire</h2>
-                    <div class="info-row">
-                        <span class="info-label">Mode Comfort</span>
-                        <span id="dhwComfort" class="info-value">--</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Température réelle</span>
-                        <span id="dhwRealTemp" class="info-value">--</span>
-                    </div>
+                <div class="info-row">
+                    <span class="info-label">Température réelle</span>
+                    <span id="dhwRealTemp" class="info-value">--</span>
                 </div>
+            </div>
 
-                <!-- Informations Système -->
-                <div class="section">
-                    <h2 class="section-title">⚙️ Informations Système</h2>
-                    <div class="info-row">
-                        <span class="info-label">Version ebusd</span>
-                        <span id="ebusVersion" class="info-value">--</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Signal eBUS</span>
-                        <span id="ebusSignal" class="info-value">--</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Maîtres détectés</span>
-                        <span id="ebusMasters" class="info-value">--</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Messages eBUS</span>
-                        <span id="ebusMessages" class="info-value">--</span>
-                    </div>
+            <!-- Informations Système -->
+            <div class="section">
+                <h2 class="section-title">⚙️ Informations Système</h2>
+                <div class="info-row">
+                    <span class="info-label">Version ebusd</span>
+                    <span id="ebusVersion" class="info-value">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Signal eBUS</span>
+                    <span id="ebusSignal" class="info-value">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Maîtres détectés</span>
+                    <span id="ebusMasters" class="info-value">--</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Messages eBUS</span>
+                    <span id="ebusMessages" class="info-value">--</span>
                 </div>
             </div>
         </div>
@@ -372,19 +497,15 @@
     <script>
         const API_URL = '/api/data/';
         let refreshInterval;
+        let currentZ1Temp = 52.0;
+        let currentDhwTemp = 55.0;
 
-        function showLoading(show) {
-            document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
-            document.getElementById('dataContainer').style.display = show ? 'none' : 'block';
-        }
-
-        function showError(message) {
-            const errorContainer = document.getElementById('errorContainer');
-            errorContainer.innerHTML = `<div class="error-message">❌ ${message}</div>`;
-        }
-
-        function clearError() {
-            document.getElementById('errorContainer').innerHTML = '';
+        function showMessage(message, type) {
+            const container = document.getElementById('messageContainer');
+            container.innerHTML = `<div class="message ${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
         }
 
         function updateConnectionStatus(connected) {
@@ -404,10 +525,87 @@
             return path.split('.').reduce((acc, part) => acc && acc[part], obj);
         }
 
-        async function loadData() {
-            showLoading(true);
-            clearError();
+        function updateZ1Display(value) {
+            currentZ1Temp = parseFloat(value);
+            document.getElementById('z1TempControl').textContent = currentZ1Temp.toFixed(1);
+        }
 
+        function adjustZ1Temp(delta) {
+            const slider = document.getElementById('z1Slider');
+            let newValue = parseFloat(slider.value) + delta;
+            newValue = Math.max(35, Math.min(65, newValue));
+            slider.value = newValue;
+            updateZ1Display(newValue);
+        }
+
+        function updateDhwDisplay(value) {
+            currentDhwTemp = parseFloat(value);
+            document.getElementById('dhwTempControl').textContent = currentDhwTemp.toFixed(1);
+        }
+
+        function adjustDhwTemp(delta) {
+            const slider = document.getElementById('dhwSlider');
+            let newValue = parseFloat(slider.value) + delta;
+            newValue = Math.max(35, Math.min(65, newValue));
+            slider.value = newValue;
+            updateDhwDisplay(newValue);
+        }
+
+        async function setZ1Temp() {
+            try {
+                const temp = currentZ1Temp.toFixed(1);
+                // Écrire via l'API ebusd
+                const response = await fetch(`${API_URL.replace('/data/', '')}/data/z1_fixed_temp/write?${temp}`);
+                
+                if (response.ok) {
+                    showMessage(`✓ Température Zone 1 réglée à ${temp}°C`, 'success');
+                    setTimeout(loadData, 2000);
+                } else {
+                    throw new Error('Erreur API');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                showMessage('❌ Erreur lors du réglage de la température', 'error');
+            }
+        }
+
+        async function setDhwTemp() {
+            try {
+                const temp = currentDhwTemp.toFixed(1);
+                const response = await fetch(`${API_URL.replace('/data/', '')}/data/dhw_target_temp/write?${temp}`);
+                
+                if (response.ok) {
+                    showMessage(`✓ Température ECS réglée à ${temp}°C`, 'success');
+                    setTimeout(loadData, 2000);
+                } else {
+                    throw new Error('Erreur API');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                showMessage('❌ Erreur lors du réglage de la température', 'error');
+            }
+        }
+
+        async function toggleDhwComfort() {
+            try {
+                const checkbox = document.getElementById('dhwComfort');
+                const value = checkbox.checked ? '1' : '0';
+                const response = await fetch(`${API_URL.replace('/data/', '')}/data/dhw_comfort_mode_status_w/write?${value}`);
+                
+                if (response.ok) {
+                    showMessage(`✓ Mode Comfort ${checkbox.checked ? 'activé' : 'désactivé'}`, 'success');
+                    setTimeout(loadData, 2000);
+                } else {
+                    throw new Error('Erreur API');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                showMessage('❌ Erreur lors du changement du mode', 'error');
+                document.getElementById('dhwComfort').checked = !document.getElementById('dhwComfort').checked;
+            }
+        }
+
+        async function loadData() {
             try {
                 const response = await fetch(API_URL);
                 
@@ -416,7 +614,6 @@
                 }
 
                 const data = await response.json();
-                console.log('Données reçues:', data);
 
                 // État chaudière
                 const boilerStatus = getValue(data, 'boiler.messages.boiler_status.fields.boiler_status.value');
@@ -447,16 +644,27 @@
 
                 const z1Target = getValue(data, 'boiler.messages.hot_water_target_temp_1.fields.z1_target_temp.value');
                 document.getElementById('z1TargetTemp').textContent = z1Target !== undefined ? z1Target.toFixed(1) : '--';
+                
+                // Mettre à jour le slider Zone 1
+                if (z1Target !== undefined) {
+                    document.getElementById('z1Slider').value = z1Target;
+                    updateZ1Display(z1Target);
+                }
 
                 const z2Target = getValue(data, 'boiler.messages.hot_water_target_temp_1.fields.z2_target_temp.value');
                 document.getElementById('z2TargetTemp').textContent = z2Target !== undefined ? z2Target.toFixed(1) : '--';
 
-                const z3Target = getValue(data, 'boiler.messages.hot_water_target_temp_1.fields.z3_target_temp.value');
-                document.getElementById('z3TargetTemp').textContent = z3Target !== undefined ? z3Target.toFixed(1) : '--';
+                // Mettre à jour le slider DHW
+                if (dhwTemp !== undefined) {
+                    document.getElementById('dhwSlider').value = dhwTemp;
+                    updateDhwDisplay(dhwTemp);
+                }
 
                 // DHW
                 const dhwComfort = getValue(data, 'dhw.messages.dhw_comfort_mode_status.fields.dhw_comfort_mode_status.value');
-                document.getElementById('dhwComfort').textContent = dhwComfort || '--';
+                if (dhwComfort) {
+                    document.getElementById('dhwComfort').checked = (dhwComfort.toLowerCase() === 'on');
+                }
                 document.getElementById('dhwRealTemp').textContent = dhwTemp !== undefined ? dhwTemp.toFixed(1) + ' °C' : '--';
 
                 // Informations système
@@ -470,21 +678,18 @@
                 document.getElementById('lastUpdate').textContent = now.toLocaleTimeString('fr-FR');
 
                 updateConnectionStatus(true);
-                showLoading(false);
 
             } catch (error) {
                 console.error('Erreur:', error);
-                showError('Impossible de charger les données. Vérifiez que ebusd est démarré.');
                 updateConnectionStatus(false);
-                showLoading(false);
             }
         }
 
         // Charger les données au démarrage
         window.addEventListener('DOMContentLoaded', () => {
             loadData();
-            // Actualiser toutes les 5 secondes
-            refreshInterval = setInterval(loadData, 5000);
+            // Actualiser toutes les 10 secondes
+            refreshInterval = setInterval(loadData, 10000);
         });
 
         // Arrêter l'actualisation quand la page est fermée
