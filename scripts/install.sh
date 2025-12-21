@@ -179,15 +179,17 @@ sudo bash -c "cat > /etc/systemd/system/chaudiere-control.service << EOF
 [Unit]
 Description=Interface Web Controle Chaudiere
 After=network.target ebusd.service
-Requires=ebusd.service
+Wants=ebusd.service
 
 [Service]
 Type=simple
 User=$USER
 WorkingDirectory=$APP_DIR
 ExecStart=/usr/bin/node $APP_DIR/server.js
-Restart=always
+Restart=on-failure
 RestartSec=10
+StartLimitInterval=200
+StartLimitBurst=5
 StandardOutput=journal
 StandardError=journal
 

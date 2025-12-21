@@ -230,6 +230,87 @@
             transform: scale(1.05);
         }
 
+        .relay-status {
+            text-align: center;
+            padding: 15px;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #ccc;
+            transition: all 0.3s ease;
+        }
+
+        .status-indicator.on .status-dot {
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+        }
+
+        .status-indicator.off .status-dot {
+            background: #ef4444;
+        }
+
+        .relay-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .relay-btn {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .relay-on {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .relay-on:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .relay-off {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .relay-off:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .relay-btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-icon {
+            font-size: 20px;
+        }
+
         .section {
             margin-bottom: 30px;
         }
@@ -401,6 +482,24 @@
                         <button class="temp-btn" onclick="adjustDhwTemp(0.5)">+</button>
                     </div>
                     <button class="apply-btn" onclick="setDhwTemp()">✓ Appliquer</button>
+                </div>
+
+                <div class="control-card">
+                    <div class="control-title">Marche/Arrêt Chauffage</div>
+                    <div class="relay-status">
+                        <div class="status-indicator" id="relayIndicator">
+                            <span class="status-dot"></span>
+                            <span id="relayStatus">--</span>
+                        </div>
+                    </div>
+                    <div class="relay-controls">
+                        <button class="relay-btn relay-on" onclick="turnRelayOn()">
+                            <span class="btn-icon">⚡</span> Allumer
+                        </button>
+                        <button class="relay-btn relay-off" onclick="turnRelayOff()">
+                            <span class="btn-icon">⏸</span> Éteindre
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -685,11 +784,71 @@
             }
         }
 
+        // Contrôle du relais
+        async function turnRelayOn() {
+            try {
+                const response = await fetch('/api/relay/on');
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('✓ Chauffage allumé', 'success');
+                    updateRelayStatus();
+                } else {
+                    showMessage('Erreur lors de l\'allumage', 'error');
+                }
+            } catch (error) {
+                console.error('Erreur relais ON:', error);
+                showMessage('Erreur de communication', 'error');
+            }
+        }
+
+        async function turnRelayOff() {
+            try {
+                const response = await fetch('/api/relay/off');
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('✓ Chauffage éteint', 'success');
+                    updateRelayStatus();
+                } else {
+                    showMessage('Erreur lors de l\'extinction', 'error');
+                }
+            } catch (error) {
+                console.error('Erreur relais OFF:', error);
+                showMessage('Erreur de communication', 'error');
+            }
+        }
+
+        async function updateRelayStatus() {
+            try {
+                const response = await fetch('/api/relay/status');
+                const data = await response.json();
+
+                const indicator = document.getElementById('relayIndicator');
+                const statusText = document.getElementById('relayStatus');
+
+                if (data.isOn) {
+                    indicator.className = 'status-indicator on';
+                    statusText.textContent = 'ALLUMÉ';
+                } else {
+                    indicator.className = 'status-indicator off';
+                    statusText.textContent = 'ÉTEINT';
+                }
+            } catch (error) {
+                console.error('Erreur status relais:', error);
+                document.getElementById('relayStatus').textContent = 'ERREUR';
+            }
+        }
+
         // Charger les données au démarrage
         window.addEventListener('DOMContentLoaded', () => {
             loadData();
+            updateRelayStatus();
             // Actualiser toutes les 10 secondes
-            refreshInterval = setInterval(loadData, 10000);
+            refreshInterval = setInterval(() => {
+                loadData();
+                updateRelayStatus();
+            }, 10000);
         });
 
         // Arrêter l'actualisation quand la page est fermée
