@@ -1,308 +1,431 @@
-# Contrôle de Chaudière Chaffoteaux via eBUS
+# Contrôle de Chaudière Chaffoteaux MIRA C GREEN
 
-Interface web moderne pour contrôler votre chaudière **Chaffoteaux MIRA C GREEN 25** via un adaptateur **eBUS C6 Stick Edition** et un Raspberry Pi.
+Interface web moderne avec **thermostat automatique** pour contrôler votre chaudière **Chaffoteaux MIRA C GREEN 25** via eBUS (lecture seule) et relais GPIO.
 
-![Version](https://img.shields.io/badge/version-1.0-blue)
+![Version](https://img.shields.io/badge/version-2.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-Raspberry%20Pi-red)
+![Node](https://img.shields.io/badge/node-20.x-green)
+![Bootstrap](https://img.shields.io/badge/bootstrap-5.3-purple)
 
-## Fonctionnalités
+## ✨ Fonctionnalités principales
 
-### Chauffage
-- **Affichage en temps réel** des températures (départ, retour, pièce, extérieure)
-- **Réglage direct de la température de l'eau** en mode fixe entre 35°C et 65°C
-- **Contrôle simple** sans thermorégulation ni sonde externe (comme un bouton de chaudière)
-- **Informations avancées** : pente/décalage thermorégulation, paramètres de zone
+### 🌡️ Thermostat Automatique (Nouveau !)
 
-### Eau Chaude Sanitaire (ECS)
-- **Contrôle température ECS** entre 35°C et 65°C
-- **Mode confort** activable/désactivable
-- **Température antigel** en temps réel
-- **Statut ECS** détaillé
+- **Capteur DHT22 déporté** - Température et humidité ambiante en temps réel
+- **Régulation automatique** par hystérésis (±0.75°C par défaut)
+- **Consigne réglable** de 15 à 25°C (interface web)
+- **Protection anti-cycles** - Durée minimale configurable entre ON/OFF (7.5 min par défaut)
+- **Mode manuel/automatique** - Switch entre contrôle manuel et régulation auto
+- **Indicateurs visuels** - État en temps réel (En chauffe, Confort atteint, En attente)
+- **Configuration persistante** - Sauvegarde automatique des réglages
 
-### État et Diagnostics
-- **État flamme** et cycles d'allumage
-- **Vitesse ventilateur** en RPM
-- **Statut chaudière** complet (général, chauffage, SRA)
-- **Codes d'erreur** en temps réel
+### 📊 Monitoring eBUS (Lecture seule)
 
-### Interface
-- **Interface à onglets** (Chauffage, Eau Chaude, État, Avancé)
-- **Boutons +/-** et slider pour réglage précis
-- **Actualisation automatique** toutes les 30 secondes
-- **Design responsive** optimisé pour mobile et desktop
-- **Accès à distance sécurisé** via Tailscale VPN
-- **Indicateur de connexion** en temps réel
-- **Messages de confirmation** pour chaque action
+- **Températures en temps réel** - Départ, retour, ECS, zones
+- **État chaudière** - Statut ON/OFF, demandes de chauffage Z1/Z2
+- **Diagnostics** - Version ebusd, signal eBUS, maîtres détectés
+- **Informations ECS** - Température réelle, mode Comfort
 
-## Aperçu
+> **Note importante** : Le protocole eBUS sur Mira C Green est **en lecture seule**. L'écriture via BridgeNET n'est pas supportée. Le contrôle se fait exclusivement via le relais GPIO14.
+
+### 🔌 Contrôle GPIO
+
+- **Relais GPIO14** - Contrôle ON/OFF du chauffage via contact TA1 (thermostat)
+- **Active-low** - 0 = chauffage ON, 1 = chauffage OFF
+- **Mode manuel** - Switch ON/OFF direct depuis l'interface
+- **Mode automatique** - Régulation par thermostat DHT22
+
+### 🎨 Interface Web Bootstrap 5
+
+- **Design moderne et responsive** - Optimisé mobile, tablette, desktop
+- **Cards élégantes** - Organisation claire par sections
+- **Actualisation automatique** - Données rafraîchies toutes les 10 secondes
+- **Indicateurs visuels** - Badges colorés, icônes Bootstrap
+- **Messages de confirmation** - Alerts Bootstrap pour chaque action
+
+## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────┐
-│  Contrôle Chaudière             │
-│  Chaffoteaux MIRA C GREEN 25    │
-├─────────────────────────────────┤
-│  ● Connecté                     │
-├─────────────────────────────────┤
-│  Température actuelle    65°C   │
-│  Température cible       21°C   │
-│  État                    Actif  │
-├─────────────────────────────────┤
-│          21.0°C                 │
-│         −     +                 │
-│  ═════●═════════════            │
-│  [Appliquer la température]    │
-│  [Actualiser]                   │
-└─────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                   Raspberry Pi Principal                     │
+│  ┌────────────┐  ┌──────────────┐  ┌──────────────────┐    │
+│  │  ebusd     │  │  server.js   │  │   index.html     │    │
+│  │  (lecture) │→ │  (Node.js)   │→ │  (Bootstrap 5)   │    │
+│  └────────────┘  └──────────────┘  └──────────────────┘    │
+│        ↓               ↓                                     │
+│   eBUS C6 Stick    GPIO14 (relais)                          │
+└────────│───────────────│──────────────────────────────────┘
+         │               │
+         ↓               ↓
+    Chaudière      Contact TA1
+    Mira C Green   (thermostat)
+
+┌─────────────────────────────────────────────────────────────┐
+│              Raspberry Pi Zero W (Thermostat)               │
+│  ┌─────────────────┐                                        │
+│  │ dht22-server.py │ ← DHT22 (GPIO4)                       │
+│  │   (Python)      │                                        │
+│  └─────────────────┘                                        │
+│         ↓                                                    │
+│  HTTP :5000/data                                            │
+└─────────│───────────────────────────────────────────────────┘
+          │
+          → Réseau local → Raspberry Pi Principal
 ```
 
-## Matériel requis
+## 🛠️ Matériel requis
 
-- **Raspberry Pi** (modèle 3, 4, ou Zero 2 W)
+### Raspberry Pi Principal
+
+- **Raspberry Pi 3/4** (recommandé) ou Pi Zero 2 W
 - **eBUS Adapter Shield C6 Stick Edition** ([lien](https://adapter.ebusd.eu/v5-c6/stick.en.html))
-- **Chaudière Chaffoteaux MIRA C GREEN 25** (ou compatible eBUS)
-- Carte SD (8 Go minimum)
-- Alimentation USB pour Raspberry Pi
-- Câble USB pour l'adaptateur eBUS
+- **Relais 5V** - Module relais 1 canal (active-low compatible)
+- **Câbles GPIO** - Connexion GPIO14 → relais → contact TA1 chaudière
+- Carte SD 16 Go minimum
+- Alimentation 5V 3A
 
-## Installation rapide
+### Raspberry Pi Zero W (Thermostat déporté)
 
-### Option 1 : Script automatique (recommandé)
+- **Raspberry Pi Zero W** (WiFi intégré)
+- **Capteur DHT22** (ou DHT11) - Température et humidité
+- Carte SD 8 Go minimum
+- Alimentation 5V 1A
+
+### Chaudière
+
+- **Chaffoteaux MIRA C GREEN 25** (ou compatible eBUS/BridgeNET)
+- Accès au contact TA1 (thermostat)
+- Accès au port eBUS
+
+## 📦 Installation
+
+### 1. Raspberry Pi Principal
 
 ```bash
 # Cloner le repository
 git clone https://github.com/lesitevideo/chaudiere.git
 cd chaudiere
 
-# Lancer le script d'installation
-./scripts/install.sh
+# Installer Node.js 20.x
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
+sudo apt install -y nodejs
+
+# Installer ebusd
+sudo apt install -y ebusd
+
+# Configurer ebusd
+sudo nano /etc/default/ebusd
+# EBUSD_OPTS="--device=/dev/ttyUSB0 --scanconfig --latency=10 --port=8888 --httpport=8889"
+
+sudo systemctl enable ebusd
+sudo systemctl start ebusd
+
+# Tester ebusd
+ebusctl info
+
+# Configurer sudo pour GPIO (nécessaire pour raspi-gpio)
+sudo visudo -f /etc/sudoers.d/gpio
+# Ajouter (remplacer 'pi' par votre utilisateur):
+# pi ALL=(ALL) NOPASSWD: /usr/bin/raspi-gpio set 14 op *
+# pi ALL=(ALL) NOPASSWD: /usr/bin/raspi-gpio get 14
+
+# Lancer le serveur
+node server.js
 ```
 
-Le script installera automatiquement :
-- ebusd 25.1
-- Node.js 20.x
-- L'interface web de contrôle
-- Les services systemd
-- Optionnellement : Tailscale pour l'accès distant
+**Le serveur démarre sur http://[IP]:3000**
 
-### Option 2 : Installation manuelle
+### 2. Raspberry Pi Zero W (Thermostat)
 
-Consultez le fichier [INSTALLATION.md](docs/INSTALLATION.md) pour les instructions détaillées.
+Consultez le dossier `thermostat/` pour les fichiers et instructions détaillées.
 
-## Configuration rapide
+```bash
+# Sur le Pi Zero W
+mkdir -p ~/dht22-server
+cd ~/dht22-server
 
-1. **Connecter l'adaptateur eBUS**
-   - Brancher l'adaptateur C6 Stick sur le Raspberry Pi
-   - Connecter les fils eBUS à la chaudière (respecter la polarité)
+# Installer dépendances
+sudo apt update
+sudo apt install -y python3-pip libgpiod2
+sudo pip3 install Flask adafruit-circuitpython-dht adafruit-blinka --break-system-packages
 
-2. **Démarrer ebusd**
-   ```bash
-   sudo systemctl start ebusd
-   sudo systemctl status ebusd
-   ```
+# Créer dht22-server.py (voir thermostat/dht22-server.py)
+nano dht22-server.py
+chmod +x dht22-server.py
 
-3. **Tester la connexion**
-   ```bash
-   ebusctl info
-   ebusctl read FlowTemp
-   ```
+# Créer le service systemd (voir thermostat/thermostat-dht22.service)
+sudo nano /etc/systemd/system/thermostat-dht22.service
 
-4. **Accéder à l'interface**
-   - Ouvrir un navigateur
-   - Aller sur `http://[IP_RASPBERRY]:3000`
+# Activer et démarrer
+sudo systemctl daemon-reload
+sudo systemctl enable thermostat-dht22
+sudo systemctl start thermostat-dht22
 
-## Configuration
+# Vérifier
+sudo systemctl status thermostat-dht22
+curl http://thermostat-salon.local:5000/data
+```
+
+**Configuration hostname du Pi Zero :**
+```bash
+sudo hostnamectl set-hostname thermostat-salon
+```
+
+### 3. Câblage GPIO14 (Relais)
+
+```
+Raspberry Pi         Relais 5V           Chaudière
+GPIO14 ──────────→ IN
+5V ──────────────→ VCC
+GND ─────────────→ GND
+                    NO ──────────────→ TA1 (contact 1)
+                    COM ─────────────→ TA1 (contact 2)
+```
+
+**Important** : Utilisez un relais **active-low** ou configurez selon votre module.
+
+## ⚙️ Configuration
+
+### Thermostat (thermostat-config.json)
+
+Créé automatiquement au premier lancement, modifiable via l'interface web :
+
+```json
+{
+  "enabled": false,
+  "targetTemp": 20.0,
+  "hysteresis": 1.5,
+  "minCycleDuration": 450
+}
+```
+
+- `enabled` : Mode automatique ON/OFF
+- `targetTemp` : Consigne de température (15-25°C)
+- `hysteresis` : Écart total en °C (1.5 = ±0.75°C)
+- `minCycleDuration` : Délai minimum entre cycles en secondes (450 = 7.5 min)
 
 ### ebusd
 
-Le fichier de configuration se trouve dans `/etc/default/ebusd` :
+Fichier `/etc/default/ebusd` :
 
 ```bash
 EBUSD_OPTS="--device=/dev/ttyUSB0 --scanconfig --latency=10 --port=8888 --httpport=8889"
 ```
 
-### Interface Web
+### Serveur Web
 
-Le serveur écoute par défaut sur le port **3000**. Pour changer le port, éditez `server.js` :
+Dans `server.js` :
 
 ```javascript
-const PORT = 3000; // Modifier ici
+const PORT = 3000;
+const THERMOSTAT_URL = 'http://thermostat-salon.local:5000/data';
+const GPIO_PIN = 14;
 ```
 
-## Accès à distance sécurisé avec Tailscale
+## 🚀 Utilisation
 
-**Recommandé** : Utilisez Tailscale pour un accès distant sécurisé sans ouvrir de ports sur votre box Internet.
+### Interface Web
 
-### Installation rapide Tailscale
+Accédez à **http://[IP_RASPBERRY]:3000**
+
+**Sections disponibles :**
+
+1. **Contrôles** :
+   - **Thermostat Salon** : Température ambiante, humidité, consigne, mode auto
+   - **Marche/Arrêt Chauffage** : Switch manuel (désactivé en mode auto)
+
+2. **État Chaudière** : Statut, demandes Z1/Z2
+
+3. **Températures** : ECS, consignes zones (lecture seule)
+
+4. **Réglages Chaudière (Lecture seule)** : Températures Zone 1 et ECS (informatif)
+
+5. **Informations Système** : Version ebusd, signal eBUS, maîtres
+
+### Mode Thermostat Automatique
+
+1. Régler la consigne (ex: 21°C) avec le slider
+2. Activer le **switch "Mode automatique"**
+3. Le système régule automatiquement :
+   - Chauffe si T < (consigne - 0.75°C)
+   - Arrêt si T > (consigne + 0.75°C)
+   - Maintien dans la zone d'hystérésis
+
+**Indicateurs d'état :**
+- 🔥 **En chauffe** - Relais ON, température insuffisante
+- ✅ **Confort atteint** - Relais OFF, température atteinte
+- ⏰ **En attente** - Dans la période de protection anti-cycles
+- ⚙️ **Mode manuel** - Régulation désactivée
+
+## 🔧 Commandes utiles
 
 ```bash
-# Sur le Raspberry Pi
+# Vérifier ebusd
+sudo systemctl status ebusd
+ebusctl info
+ebusctl read FlowTemp
+
+# Voir les logs
+sudo journalctl -u ebusd -f
+
+# Thermostat Pi Zero W
+ssh pi@thermostat-salon.local
+sudo systemctl status thermostat-dht22
+sudo journalctl -u thermostat-dht22 -f
+
+# Tester thermostat
+curl http://thermostat-salon.local:5000/data
+
+# Tester GPIO relais
+sudo raspi-gpio get 14
+sudo raspi-gpio set 14 op dl  # ON (drive low)
+sudo raspi-gpio set 14 op dh  # OFF (drive high)
+
+# Tester API thermostat (depuis Pi principal)
+curl http://localhost:3000/api/thermostat/ambient
+curl http://localhost:3000/api/thermostat/config
+curl http://localhost:3000/api/thermostat/state
+curl http://localhost:3000/api/relay/status
+```
+
+## 🐛 Dépannage
+
+### Thermostat ne répond pas
+
+```bash
+# Vérifier service sur Pi Zero W
+ssh pi@thermostat-salon.local
+sudo systemctl status thermostat-dht22
+
+# Vérifier réseau
+ping thermostat-salon.local
+
+# Tester directement
+curl http://thermostat-salon.local:5000/data
+```
+
+### Relais ne fonctionne pas
+
+```bash
+# Vérifier permissions sudo
+sudo raspi-gpio get 14
+
+# Tester manuellement
+sudo raspi-gpio set 14 op dl  # ON
+sudo raspi-gpio set 14 op dh  # OFF
+
+# Vérifier câblage
+# GPIO14 → IN relais
+# Vérifier que le relais clique
+```
+
+### Erreur "Device or resource busy" (GPIO)
+
+```bash
+# Tuer les processus gpioset en conflit
+sudo pkill -f gpioset
+
+# Ou reboot
+sudo reboot
+```
+
+### eBUS ne fonctionne pas
+
+```bash
+# Vérifier câblage eBUS (polarité correcte)
+# Vérifier USB
+ls -la /dev/ttyUSB*
+
+# Permissions
+sudo usermod -a -G dialout $USER
+sudo usermod -a -G dialout ebusd
+
+# Redémarrer
+sudo systemctl restart ebusd
+ebusctl info
+```
+
+## 🌐 Accès à distance avec Tailscale
+
+**Recommandé** pour un accès distant sécurisé :
+
+```bash
+# Sur le Raspberry Pi principal
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up
+
+# Sur le Pi Zero W (optionnel)
 curl -fsSL https://tailscale.com/install.sh | sh
 sudo tailscale up
 ```
 
-Puis installez l'application Tailscale sur votre téléphone/ordinateur et accédez via :
+Puis installez Tailscale sur votre smartphone/PC et accédez via :
 ```
 http://100.xx.xx.xx:3000
 ```
 
-### Avantages de Tailscale
+**Avantages** :
+- Chiffrement WireGuard
+- Aucun port ouvert
+- Gratuit usage personnel
+- Multi-plateforme
 
-- **Sécurité maximale** - Chiffrement de bout en bout (WireGuard)
-- **Configuration simple** - Aucun port à ouvrir
-- **Authentification intégrée** - Zero Trust
-- **Gratuit** - Pour usage personnel
-- **Multi-plateforme** - iOS, Android, Windows, macOS, Linux
+## 📚 Documentation
 
-**Guide complet** : Consultez [TAILSCALE.md](docs/TAILSCALE.md) pour les instructions détaillées.
-
-## Utilisation Mobile
-
-L'interface est optimisée pour mobile et peut être ajoutée à l'écran d'accueil :
-
-- **iOS** : Safari → Partager → Sur l'écran d'accueil
-- **Android** : Chrome → Menu → Ajouter à l'écran d'accueil
-
-## Commandes utiles
-
-```bash
-# Vérifier le statut d'ebusd
-sudo systemctl status ebusd
-
-# Lire la température de départ actuelle
-ebusctl read water_temp_out
-
-# Régler la température fixe de l'eau de chauffage
-ebusctl write z1_fixed_temp 50.0
-
-# Lister toutes les commandes disponibles
-ebusctl find
-
-# Voir les logs en temps réel
-sudo journalctl -u ebusd -f
-sudo journalctl -u chaudiere-control -f
-
-# Redémarrer les services
-sudo systemctl restart ebusd
-sudo systemctl restart chaudiere-control
-```
-
-## Dépannage
-
-### ebusd ne démarre pas
-
-```bash
-# Vérifier les logs
-sudo journalctl -u ebusd -n 50
-
-# Vérifier le port USB
-ls -la /dev/ttyUSB*
-
-# Vérifier les permissions
-sudo usermod -a -G dialout $USER
-sudo usermod -a -G dialout ebusd
-```
-
-### Pas de communication avec la chaudière
-
-- Vérifier le câblage eBUS (polarité correcte)
-- Attendre 2-3 minutes après le démarrage
-- Vérifier que la chaudière est allumée
-- Consulter `ebusctl info` et `ebusctl state`
-
-### Interface web inaccessible
-
-```bash
-# Vérifier que le service est actif
-sudo systemctl status chaudiere-control
-
-# Vérifier le port
-sudo netstat -tuln | grep 3000
-
-# Tester localement
-curl http://localhost:3000
-```
-
-## Documentation
-
-- [Guide d'installation complet](docs/INSTALLATION.md)
-- [Accès à distance avec Tailscale](docs/TAILSCALE.md)
-- [Liste des commandes eBUS](docs/COMMANDES_EBUS.md)
+- [ebusd Documentation](https://github.com/john30/ebusd)
 - [Configuration BridgeNET](https://github.com/ysard/ebusd_configuration_chaffoteaux_bridgenet)
-- [Documentation ebusd](https://github.com/john30/ebusd)
-- [Wiki ebusd](https://github.com/john30/ebusd/wiki)
-- [Configurations eBUS](https://github.com/john30/ebusd-configuration)
+- [Capteur DHT22](https://learn.adafruit.com/dht)
+- [Bootstrap 5 Docs](https://getbootstrap.com/docs/5.3/)
 
-## Configuration BridgeNET
+## 🗺️ Roadmap
 
-Cette interface utilise les commandes spécifiques au protocole **BridgeNET** de Chaffoteaux. Les noms de commandes sont basés sur le fichier CSV de [ysard/ebusd_configuration_chaffoteaux_bridgenet](https://github.com/ysard/ebusd_configuration_chaffoteaux_bridgenet/blob/master/mira_c_green.csv).
+### Fait ✅
 
-**Important** : Si vous utilisez une configuration eBUS générique, les commandes peuvent être différentes. Consultez le fichier [COMMANDES_EBUS.md](docs/COMMANDES_EBUS.md) pour la liste complète des commandes utilisées.
+- [x] Monitoring eBUS (lecture seule)
+- [x] Interface Bootstrap 5 responsive
+- [x] Contrôle relais GPIO14
+- [x] Thermostat DHT22 déporté (Pi Zero W)
+- [x] Régulation automatique avec hystérésis
+- [x] Mode manuel/automatique
+- [x] Configuration persistante
+- [x] Protection anti-cycles
+- [x] Indicateurs d'état en temps réel
 
-## Sécurité
+### À venir 🚧
 
-**Important** : Cette interface est basique et n'inclut pas d'authentification par défaut.
+- [ ] **Sonde température extérieure** - Pour modèle thermique prédictif
+- [ ] **Historique et graphiques** - Températures, cycles de chauffe
+- [ ] **Apprentissage/prédiction** - Calcul constante thermique, temps de chauffe
+- [ ] **Programmation horaire** - Plages de température par jour/heure
+- [ ] **Notifications** - Alertes email/push (erreurs, températures)
+- [ ] **Authentification** - Login/mot de passe pour sécuriser l'interface
+- [ ] **API REST complète** - Documentation OpenAPI/Swagger
+- [ ] **Intégration Home Assistant** - Via MQTT ou API REST
+- [ ] **Application mobile** - PWA ou native iOS/Android
 
-**Accès local uniquement** : Si vous n'accédez à l'interface que depuis votre réseau local (WiFi), aucune configuration supplémentaire n'est nécessaire.
+## ⚠️ Avertissements
 
-**Accès distant sécurisé** : Utilisez **Tailscale** (recommandé) :
-- Chiffrement de bout en bout automatique
-- Authentification intégrée
-- Aucun port exposé publiquement
-- Voir le [guide Tailscale](docs/TAILSCALE.md)
+- **Utilisez à vos risques** - Modifications de chauffage sensibles
+- **Vérifiez le câblage** - Erreur sur TA1 peut endommager la chaudière
+- **eBUS lecture seule** - Pas d'écriture possible sur Mira C Green
+- **Sécurité électrique** - Relais correctement isolé et dimensionné
+- **Consultez le manuel** - De votre chaudière avant toute modification
+- **Maintenez à jour** - Système et dépendances
 
-**Alternative pour usage avancé** :
-- Authentification (login/mot de passe) avec reverse proxy
-- Certificat SSL/HTTPS avec Let's Encrypt
-- Reverse proxy (nginx, Caddy) avec authentification basique
-
-## Contribution
-
-Les contributions sont les bienvenues ! N'hésitez pas à :
-- Signaler des bugs
-- Proposer des améliorations
-- Partager vos configurations
-
-## Licence
+## 📄 Licence
 
 MIT License - Libre d'utilisation et de modification
 
-## Avertissements
+## 🙏 Remerciements
 
-- Utilisez cette interface à vos propres risques
-- Vérifiez que les modifications de température respectent les limites de votre installation
-- Ne modifiez pas les paramètres avancés de la chaudière sans connaissance
-- Consultez le manuel de votre chaudière
-- Maintenez votre système à jour
-
-## Roadmap
-
-- [x] Correction commandes eBUS pour Mira C Green BridgeNET
-- [x] Contrôle eau chaude sanitaire (DHW)
-- [x] Interface à onglets
-- [x] Informations avancées (flamme, ventilateur, thermorégulation)
-- [ ] Authentification utilisateur
-- [ ] Historique des températures avec graphiques
-- [ ] Support zones multiples (Z2-Z7)
-- [ ] Planification horaire (programmation timer)
-- [ ] Historique des erreurs (10 dernières)
-- [ ] Notifications push
-- [ ] Application mobile native
-- [ ] Intégration Home Assistant / MQTT
-
-## Support
-
-En cas de problème :
-1. Consultez la section [Dépannage](#dépannage)
-2. Vérifiez les [issues GitHub](https://github.com/lesitevideo/chaudiere/issues)
-3. Consultez le forum ebusd
-
-## Remerciements
-
-- [john30](https://github.com/john30) pour ebusd
-- La communauté eBUS
-- Tous les contributeurs
+- [john30](https://github.com/john30) - ebusd
+- [ysard](https://github.com/ysard) - Configuration BridgeNET Chaffoteaux
+- Communauté eBUS et Raspberry Pi
+- Adafruit - Librairies DHT22
 
 ---
 
-Développé pour faciliter le contrôle de votre chaudière
+**Projet développé pour un contrôle moderne et économique de votre chauffage** 🔥
+
+Pour toute question : [Issues GitHub](https://github.com/lesitevideo/chaudiere/issues)
