@@ -1,4 +1,5 @@
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
@@ -10,6 +11,19 @@ const EBUSD_PORT = 8889;
 
 // Configuration GPIO relais
 const GPIO_PIN = 14;
+
+// Configuration thermostat
+const THERMOSTAT_URL = 'http://thermostat-salon.local:5000/data';
+const THERMOSTAT_REFRESH_INTERVAL = 60000; // 60 secondes
+
+// Cache données thermostat
+let thermostatData = {
+    temperature: null,
+    humidity: null,
+    timestamp: null,
+    status: 'disconnected',
+    error: null
+};
 
 // Fonctions de contrôle du relais - utilise raspi-gpio directement
 function setRelay(on) {
@@ -42,6 +56,72 @@ function getRelayState() {
     }
 }
 
+// Fonction pour récupérer les données du thermostat
+function fetchThermostatData() {
+    return new Promise((resolve, reject) => {
+        const url = new URL(THERMOSTAT_URL);
+        const options = {
+            hostname: url.hostname,
+            port: url.port || 5000,
+            path: url.pathname,
+            method: 'GET',
+            timeout: 5000 // Timeout 5 secondes
+        };
+
+        const req = http.request(options, (res) => {
+            let data = '';
+
+            res.on('data', (chunk) => {
+                data += chunk;
+            });
+
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(data);
+                    resolve(parsed);
+                } catch (e) {
+                    reject(new Error('Invalid JSON response'));
+                }
+            });
+        });
+
+        req.on('error', (err) => {
+            reject(err);
+        });
+
+        req.on('timeout', () => {
+            req.destroy();
+            reject(new Error('Request timeout'));
+        });
+
+        req.end();
+    });
+}
+
+// Boucle de lecture du thermostat
+function updateThermostatData() {
+    fetchThermostatData()
+        .then(data => {
+            thermostatData = {
+                temperature: data.temperature,
+                humidity: data.humidity,
+                timestamp: data.timestamp,
+                status: data.status,
+                error: null
+            };
+            console.log(`📡 Thermostat: ${data.temperature}°C, ${data.humidity}% (${data.status})`);
+        })
+        .catch(err => {
+            thermostatData.status = 'error';
+            thermostatData.error = err.message;
+            console.error(`❌ Erreur thermostat: ${err.message}`);
+        });
+}
+
+// Démarrer la lecture périodique du thermostat
+updateThermostatData(); // Lecture immédiate
+setInterval(updateThermostatData, THERMOSTAT_REFRESH_INTERVAL);
+
 const server = http.createServer((req, res) => {
     // CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -51,6 +131,13 @@ const server = http.createServer((req, res) => {
     if (req.method === 'OPTIONS') {
         res.writeHead(200);
         res.end();
+        return;
+    }
+
+    // Routes API - Thermostat
+    if (req.url === '/api/thermostat/ambient') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(thermostatData));
         return;
     }
 
@@ -97,7 +184,7 @@ const server = http.createServer((req, res) => {
     // Routes API - Proxy vers ebusd
     if (req.url.startsWith('/api/')) {
         const ebusPath = req.url.replace('/api', '');
-        
+
         const options = {
             hostname: EBUSD_HOST,
             port: EBUSD_PORT,
@@ -148,9 +235,12 @@ server.listen(PORT, HOSTNAME, () => {
     console.log(`   http://localhost:${PORT}`);
     console.log(`\n🌐 Accès réseau:`);
     console.log(`   http://mira-c-green.local:${PORT}`);
+    console.log(`\n🌡️  Thermostat:`);
+    console.log(`   ${THERMOSTAT_URL}`);
+    console.log(`   Rafraîchissement: ${THERMOSTAT_REFRESH_INTERVAL / 1000}s`);
     console.log(`\n🔌 Proxy ebusd:`);
     console.log(`   http://localhost:${PORT}/api/data/`);
-    console.log(`\n💡 Test: curl http://localhost:${PORT}/api/data/boiler_status`);
+    console.log(`\n💡 Test: curl http://localhost:${PORT}/api/thermostat/ambient`);
     console.log(`\n✅ ebusd: http://${EBUSD_HOST}:${EBUSD_PORT}`);
     console.log(`\n═══════════════════════════════════════════════════════\n`);
 });

@@ -91,31 +91,10 @@
             flex: 1;
         }
 
-        .relay-status-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.25rem;
-            font-weight: 600;
-            padding: 1rem;
-        }
-
-        .relay-status-indicator .status-dot {
-            width: 16px;
-            height: 16px;
-        }
-
-        .relay-status-indicator.on .status-dot {
-            background: #10b981;
-            box-shadow: 0 0 10px #10b981;
-        }
-
-        .relay-status-indicator.off .status-dot {
-            background: #ef4444;
-        }
-
-        .relay-btn {
-            min-width: 140px;
+        .relay-switch {
+            width: 4em !important;
+            height: 2em !important;
+            cursor: pointer;
         }
 
         .status-value {
@@ -158,6 +137,37 @@
             font-size: 0.875rem;
             border-radius: 0 0 15px 15px;
         }
+
+        .ambient-temp {
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .humidity-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .thermostat-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .thermostat-status.ok {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.5);
+        }
+
+        .thermostat-status.error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -195,77 +205,50 @@
                     </h2>
 
                     <div class="row g-4">
-                        <!-- Température Zone 1 -->
+                        <!-- Thermostat Salon -->
                         <div class="col-lg-6">
                             <div class="card control-card">
                                 <div class="card-body">
                                     <h5 class="card-title text-center mb-3">
-                                        <i class="bi bi-thermometer-half"></i> Température Zone 1 (Chauffage)
+                                        <i class="bi bi-house-door"></i> Thermostat Salon
                                     </h5>
-                                    <div class="temp-display">
-                                        <span id="z1TempControl">20.0</span>°C
+                                    <div class="text-center mb-3">
+                                        <div class="ambient-temp">
+                                            <i class="bi bi-thermometer-half"></i>
+                                            <span id="ambientTemp">--</span>°C
+                                        </div>
+                                        <div class="humidity-value mt-2">
+                                            <i class="bi bi-droplet"></i>
+                                            <span id="ambientHumidity">--</span>%
+                                        </div>
+                                        <span class="thermostat-status" id="thermostatStatus">--</span>
                                     </div>
-                                    <div class="temp-controls">
-                                        <button class="btn temp-btn" onclick="adjustZ1Temp(-0.5)">-</button>
-                                        <input type="range" class="form-range temp-slider" id="z1Slider"
-                                               min="35" max="65" step="0.5" value="52"
-                                               oninput="updateZ1Display(this.value)">
-                                        <button class="btn temp-btn" onclick="adjustZ1Temp(0.5)">+</button>
-                                    </div>
-                                    <button class="btn btn-light w-100 btn-lg" onclick="setZ1Temp()">
-                                        <i class="bi bi-check-lg"></i> Appliquer
-                                    </button>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Température ECS -->
+                        <!-- Contrôle Relais avec Switch -->
                         <div class="col-lg-6">
-                            <div class="card control-card">
-                                <div class="card-body">
-                                    <h5 class="card-title text-center mb-3">
-                                        <i class="bi bi-droplet-fill"></i> Température Eau Chaude Sanitaire
-                                    </h5>
-                                    <div class="temp-display">
-                                        <span id="dhwTempControl">55.0</span>°C
-                                    </div>
-                                    <div class="temp-controls">
-                                        <button class="btn temp-btn" onclick="adjustDhwTemp(-0.5)">-</button>
-                                        <input type="range" class="form-range temp-slider" id="dhwSlider"
-                                               min="35" max="65" step="0.5" value="55"
-                                               oninput="updateDhwDisplay(this.value)">
-                                        <button class="btn temp-btn" onclick="adjustDhwTemp(0.5)">+</button>
-                                    </div>
-                                    <button class="btn btn-light w-100 btn-lg" onclick="setDhwTemp()">
-                                        <i class="bi bi-check-lg"></i> Appliquer
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Contrôle Relais -->
-                        <div class="col-12">
                             <div class="card control-card">
                                 <div class="card-body">
                                     <h5 class="card-title text-center mb-3">
                                         <i class="bi bi-power"></i> Marche/Arrêt Chauffage
                                     </h5>
-                                    <div class="text-center mb-3">
-                                        <div class="relay-status-indicator" id="relayIndicator">
-                                            <span class="status-dot"></span>
-                                            <span id="relayStatus">--</span>
+                                    <div class="text-center">
+                                        <div class="d-flex justify-content-center align-items-center gap-3 my-4">
+                                            <span class="fs-5">
+                                                <i class="bi bi-pause-fill"></i> Éteint
+                                            </span>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input relay-switch" type="checkbox"
+                                                       id="relaySwitch" onchange="toggleRelay()">
+                                            </div>
+                                            <span class="fs-5">
+                                                <i class="bi bi-lightning-fill"></i> Allumé
+                                            </span>
                                         </div>
-                                    </div>
-                                    <div class="row g-3">
-                                        <div class="col-6">
-                                            <button class="btn btn-success w-100 btn-lg relay-btn" onclick="turnRelayOn()">
-                                                <i class="bi bi-lightning-fill"></i> Allumer
-                                            </button>
-                                        </div>
-                                        <div class="col-6">
-                                            <button class="btn btn-danger w-100 btn-lg relay-btn" onclick="turnRelayOff()">
-                                                <i class="bi bi-pause-fill"></i> Éteindre
-                                            </button>
+                                        <div class="mt-3">
+                                            <span class="badge" id="relayBadge" style="font-size: 1rem; padding: 0.5rem 1rem;">--</span>
                                         </div>
                                     </div>
                                 </div>
@@ -340,6 +323,63 @@
                                     <div class="status-value">
                                         <span id="z2TargetTemp">--</span><small class="text-muted fs-5">°C</small>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Réglages Chaudière (Read-only) -->
+                <section class="mb-5">
+                    <h2 class="section-title">
+                        <i class="bi bi-gear-fill"></i> Réglages Chaudière <small class="text-muted fs-6">(Lecture seule)</small>
+                    </h2>
+
+                    <div class="row g-4">
+                        <!-- Température Zone 1 -->
+                        <div class="col-lg-6">
+                            <div class="card control-card">
+                                <div class="card-body">
+                                    <h5 class="card-title text-center mb-3">
+                                        <i class="bi bi-thermometer-half"></i> Température Zone 1 (Chauffage)
+                                    </h5>
+                                    <div class="temp-display">
+                                        <span id="z1TempControl">20.0</span>°C
+                                    </div>
+                                    <div class="temp-controls">
+                                        <button class="btn temp-btn" onclick="adjustZ1Temp(-0.5)">-</button>
+                                        <input type="range" class="form-range temp-slider" id="z1Slider"
+                                               min="35" max="65" step="0.5" value="52"
+                                               oninput="updateZ1Display(this.value)">
+                                        <button class="btn temp-btn" onclick="adjustZ1Temp(0.5)">+</button>
+                                    </div>
+                                    <button class="btn btn-light w-100 btn-lg" onclick="setZ1Temp()">
+                                        <i class="bi bi-check-lg"></i> Appliquer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Température ECS -->
+                        <div class="col-lg-6">
+                            <div class="card control-card">
+                                <div class="card-body">
+                                    <h5 class="card-title text-center mb-3">
+                                        <i class="bi bi-droplet-fill"></i> Température Eau Chaude Sanitaire
+                                    </h5>
+                                    <div class="temp-display">
+                                        <span id="dhwTempControl">55.0</span>°C
+                                    </div>
+                                    <div class="temp-controls">
+                                        <button class="btn temp-btn" onclick="adjustDhwTemp(-0.5)">-</button>
+                                        <input type="range" class="form-range temp-slider" id="dhwSlider"
+                                               min="35" max="65" step="0.5" value="55"
+                                               oninput="updateDhwDisplay(this.value)">
+                                        <button class="btn temp-btn" onclick="adjustDhwTemp(0.5)">+</button>
+                                    </div>
+                                    <button class="btn btn-light w-100 btn-lg" onclick="setDhwTemp()">
+                                        <i class="bi bi-check-lg"></i> Appliquer
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -520,6 +560,85 @@
             }
         }
 
+        // Contrôle du relais avec switch
+        async function toggleRelay() {
+            const switchEl = document.getElementById('relaySwitch');
+            const isOn = switchEl.checked;
+
+            try {
+                const endpoint = isOn ? '/api/relay/on' : '/api/relay/off';
+                const response = await fetch(endpoint);
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage(`<i class="bi bi-check-circle-fill"></i> Chauffage ${isOn ? 'allumé' : 'éteint'}`, 'success');
+                    updateRelayStatus();
+                } else {
+                    // Revenir à l'état précédent en cas d'erreur
+                    switchEl.checked = !isOn;
+                    showMessage('<i class="bi bi-x-circle-fill"></i> Erreur de commande', 'error');
+                }
+            } catch (error) {
+                console.error('Erreur relais:', error);
+                switchEl.checked = !isOn;
+                showMessage('<i class="bi bi-x-circle-fill"></i> Erreur de communication', 'error');
+            }
+        }
+
+        async function updateRelayStatus() {
+            try {
+                const response = await fetch('/api/relay/status');
+                const data = await response.json();
+
+                const switchEl = document.getElementById('relaySwitch');
+                const badgeEl = document.getElementById('relayBadge');
+
+                switchEl.checked = data.isOn;
+
+                if (data.isOn) {
+                    badgeEl.className = 'badge bg-success';
+                    badgeEl.textContent = 'ALLUMÉ';
+                } else {
+                    badgeEl.className = 'badge bg-danger';
+                    badgeEl.textContent = 'ÉTEINT';
+                }
+            } catch (error) {
+                console.error('Erreur status relais:', error);
+                document.getElementById('relayBadge').textContent = 'ERREUR';
+            }
+        }
+
+        // Charger données thermostat
+        async function loadThermostatData() {
+            try {
+                const response = await fetch('/api/thermostat/ambient');
+                const data = await response.json();
+
+                document.getElementById('ambientTemp').textContent =
+                    data.temperature !== null ? data.temperature.toFixed(1) : '--';
+                document.getElementById('ambientHumidity').textContent =
+                    data.humidity !== null ? data.humidity.toFixed(1) : '--';
+
+                const statusEl = document.getElementById('thermostatStatus');
+                if (data.status === 'ok') {
+                    statusEl.className = 'thermostat-status ok';
+                    statusEl.textContent = 'En ligne';
+                } else if (data.status === 'error') {
+                    statusEl.className = 'thermostat-status error';
+                    statusEl.textContent = 'Erreur';
+                } else {
+                    statusEl.className = 'thermostat-status error';
+                    statusEl.textContent = 'Déconnecté';
+                }
+            } catch (error) {
+                console.error('Erreur thermostat:', error);
+                document.getElementById('ambientTemp').textContent = '--';
+                document.getElementById('ambientHumidity').textContent = '--';
+                document.getElementById('thermostatStatus').className = 'thermostat-status error';
+                document.getElementById('thermostatStatus').textContent = 'Erreur';
+            }
+        }
+
         async function loadData() {
             try {
                 const response = await fetch(API_URL);
@@ -603,69 +722,15 @@
             }
         }
 
-        // Contrôle du relais
-        async function turnRelayOn() {
-            try {
-                const response = await fetch('/api/relay/on');
-                const data = await response.json();
-
-                if (data.success) {
-                    showMessage('<i class="bi bi-check-circle-fill"></i> Chauffage allumé', 'success');
-                    updateRelayStatus();
-                } else {
-                    showMessage('<i class="bi bi-x-circle-fill"></i> Erreur lors de l\'allumage', 'error');
-                }
-            } catch (error) {
-                console.error('Erreur relais ON:', error);
-                showMessage('<i class="bi bi-x-circle-fill"></i> Erreur de communication', 'error');
-            }
-        }
-
-        async function turnRelayOff() {
-            try {
-                const response = await fetch('/api/relay/off');
-                const data = await response.json();
-
-                if (data.success) {
-                    showMessage('<i class="bi bi-check-circle-fill"></i> Chauffage éteint', 'success');
-                    updateRelayStatus();
-                } else {
-                    showMessage('<i class="bi bi-x-circle-fill"></i> Erreur lors de l\'extinction', 'error');
-                }
-            } catch (error) {
-                console.error('Erreur relais OFF:', error);
-                showMessage('<i class="bi bi-x-circle-fill"></i> Erreur de communication', 'error');
-            }
-        }
-
-        async function updateRelayStatus() {
-            try {
-                const response = await fetch('/api/relay/status');
-                const data = await response.json();
-
-                const indicator = document.getElementById('relayIndicator');
-                const statusText = document.getElementById('relayStatus');
-
-                if (data.isOn) {
-                    indicator.className = 'relay-status-indicator on';
-                    statusText.textContent = 'ALLUMÉ';
-                } else {
-                    indicator.className = 'relay-status-indicator off';
-                    statusText.textContent = 'ÉTEINT';
-                }
-            } catch (error) {
-                console.error('Erreur status relais:', error);
-                document.getElementById('relayStatus').textContent = 'ERREUR';
-            }
-        }
-
         // Charger les données au démarrage
         window.addEventListener('DOMContentLoaded', () => {
             loadData();
+            loadThermostatData();
             updateRelayStatus();
             // Actualiser toutes les 10 secondes
             refreshInterval = setInterval(() => {
                 loadData();
+                loadThermostatData();
                 updateRelayStatus();
             }, 10000);
         });
