@@ -437,7 +437,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔥 Chaudière MIRA C GREEN</h1>
+            <h1>Chaudière MIRA C GREEN</h1>
             <p class="subtitle">Contrôle et monitoring en temps réel</p>
             <div class="connection-status" id="connectionStatus">
                 <span class="status-dot"></span>
@@ -453,13 +453,13 @@
             <!-- Contrôles Température -->
             <div class="section">
                 <h2 class="section-title">🎛️ Contrôles</h2>
-                
-                <div class="control-card">
+                <div class="" style="display: flex;">
+                <div class="control-card" style="width: 50%;">
                     <div class="control-title">Température Zone 1 (Chauffage)</div>
                     <div class="temp-display">
                         <h2><span id="z1TempControl">20.0</span>°C</h2>
                     </div>
-                    <div class="temp-controls">
+                    <div class="temp-controls" >
                         <button class="temp-btn" onclick="adjustZ1Temp(-0.5)">-</button>
                         <input type="range" class="temp-slider" id="z1Slider" 
                                min="35" max="65" step="0.5" value="52"
@@ -469,7 +469,7 @@
                     <button class="apply-btn" onclick="setZ1Temp()">✓ Appliquer</button>
                 </div>
 
-                <div class="control-card">
+                <div class="control-card" style="width: 50%;">
                     <div class="control-title">Température Eau Chaude Sanitaire</div>
                     <div class="temp-display">
                         <h2><span id="dhwTempControl">55.0</span>°C</h2>
@@ -483,7 +483,7 @@
                     </div>
                     <button class="apply-btn" onclick="setDhwTemp()">✓ Appliquer</button>
                 </div>
-
+                </div>
                 <div class="control-card">
                     <div class="control-title">Marche/Arrêt Chauffage</div>
                     <div class="relay-status">
