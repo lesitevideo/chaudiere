@@ -15,6 +15,7 @@ const GPIO_PIN = 14;
 // Configuration thermostat
 const THERMOSTAT_URL = 'http://thermostat-salon.local:5000/data';
 const THERMOSTAT_REFRESH_INTERVAL = 60000; // 60 secondes
+const THERMOSTAT_CONFIG_FILE = path.join(__dirname, 'thermostat-config.json');
 
 // Cache données thermostat
 let thermostatData = {
@@ -25,9 +26,49 @@ let thermostatData = {
     error: null
 };
 
-// Fonctions de contrôle du relais - utilise raspi-gpio directement
+// Configuration thermostat (chargée depuis fichier)
+let thermostatConfig = {
+    enabled: false,
+    targetTemp: 20.0,
+    hysteresis: 1.5,
+    minCycleDuration: 450  // 7.5 minutes en secondes
+};
+
+// État thermostat
+let thermostatState = {
+    lastRelayChange: null,
+    currentAction: 'idle',  // 'heating', 'idle', 'waiting'
+    lastError: null
+};
+
+// Charger configuration thermostat
+function loadThermostatConfig() {
+    try {
+        if (fs.existsSync(THERMOSTAT_CONFIG_FILE)) {
+            const data = fs.readFileSync(THERMOSTAT_CONFIG_FILE, 'utf8');
+            thermostatConfig = JSON.parse(data);
+            console.log('📋 Configuration thermostat chargée:', thermostatConfig);
+        } else {
+            saveThermostatConfig();
+            console.log('📋 Configuration thermostat initialisée par défaut');
+        }
+    } catch (error) {
+        console.error('❌ Erreur chargement config thermostat:', error.message);
+    }
+}
+
+// Sauvegarder configuration thermostat
+function saveThermostatConfig() {
+    try {
+        fs.writeFileSync(THERMOSTAT_CONFIG_FILE, JSON.stringify(thermostatConfig, null, 2));
+        console.log('💾 Configuration thermostat sauvegardée');
+    } catch (error) {
+        console.error('❌ Erreur sauvegarde config thermostat:', error.message);
+    }
+}
+
+// Fonctions de contrôle du relais
 function setRelay(on) {
-    // Active-low: ON => drive low (dl), OFF => drive high (dh)
     const level = on ? 'dl' : 'dh';
     try {
         execSync(`sudo raspi-gpio set ${GPIO_PIN} op ${level}`, { stdio: 'inherit' });
@@ -42,7 +83,6 @@ function setRelay(on) {
 function getRelayState() {
     try {
         const output = execSync(`sudo raspi-gpio get ${GPIO_PIN}`).toString();
-        // Format: "GPIO 14: level=0 fsel=1 func=OUTPUT"
         const match = output.match(/level=(\d+)/);
         if (match) {
             const level = parseInt(match[1]);
@@ -65,7 +105,7 @@ function fetchThermostatData() {
             port: url.port || 5000,
             path: url.pathname,
             method: 'GET',
-            timeout: 5000 // Timeout 5 secondes
+            timeout: 5000
         };
 
         const req = http.request(options, (res) => {
@@ -115,12 +155,92 @@ function updateThermostatData() {
             thermostatData.status = 'error';
             thermostatData.error = err.message;
             console.error(`❌ Erreur thermostat: ${err.message}`);
+
+            // Si mode auto et capteur HS > 5 min, désactiver mode auto
+            if (thermostatConfig.enabled && thermostatData.timestamp) {
+                const age = Date.now() - (thermostatData.timestamp * 1000);
+                if (age > 300000) { // 5 minutes
+                    console.error('⚠️  Capteur HS depuis > 5 min, désactivation mode auto');
+                    thermostatConfig.enabled = false;
+                    saveThermostatConfig();
+                }
+            }
         });
 }
 
+// Régulation thermostat automatique
+function regulateThermostat() {
+    // Si mode auto désactivé, ne rien faire
+    if (!thermostatConfig.enabled) {
+        thermostatState.currentAction = 'disabled';
+        return;
+    }
+
+    // Si pas de données température, ne rien faire
+    if (thermostatData.temperature === null || thermostatData.status !== 'ok') {
+        thermostatState.currentAction = 'error';
+        return;
+    }
+
+    const currentTemp = thermostatData.temperature;
+    const target = thermostatConfig.targetTemp;
+    const halfHyst = thermostatConfig.hysteresis / 2;
+
+    const now = Date.now();
+    const timeSinceChange = thermostatState.lastRelayChange
+        ? (now - thermostatState.lastRelayChange) / 1000
+        : Infinity;
+
+    const relayState = getRelayState();
+
+    // Vérifier délai minimum
+    const canChange = timeSinceChange >= thermostatConfig.minCycleDuration;
+
+    // Demande de chauffage
+    if (currentTemp < (target - halfHyst)) {
+        if (!relayState && canChange) {
+            setRelay(true);
+            thermostatState.lastRelayChange = now;
+            thermostatState.currentAction = 'heating';
+            console.log(`🔥 Thermostat AUTO: Chauffe (${currentTemp.toFixed(1)}°C < ${(target - halfHyst).toFixed(1)}°C)`);
+        } else if (!relayState && !canChange) {
+            thermostatState.currentAction = 'waiting';
+        } else {
+            thermostatState.currentAction = 'heating';
+        }
+    }
+    // Arrêt chauffage
+    else if (currentTemp > (target + halfHyst)) {
+        if (relayState && canChange) {
+            setRelay(false);
+            thermostatState.lastRelayChange = now;
+            thermostatState.currentAction = 'idle';
+            console.log(`✓ Thermostat AUTO: Arrêt (${currentTemp.toFixed(1)}°C > ${(target + halfHyst).toFixed(1)}°C)`);
+        } else if (relayState && !canChange) {
+            thermostatState.currentAction = 'waiting';
+        } else {
+            thermostatState.currentAction = 'idle';
+        }
+    }
+    // Zone d'hystérésis - maintenir état
+    else {
+        if (!canChange) {
+            thermostatState.currentAction = 'waiting';
+        } else {
+            thermostatState.currentAction = relayState ? 'heating' : 'idle';
+        }
+    }
+}
+
+// Charger config au démarrage
+loadThermostatConfig();
+
 // Démarrer la lecture périodique du thermostat
-updateThermostatData(); // Lecture immédiate
+updateThermostatData();
 setInterval(updateThermostatData, THERMOSTAT_REFRESH_INTERVAL);
+
+// Démarrer la régulation thermostat (vérification toutes les 10s)
+setInterval(regulateThermostat, 10000);
 
 const server = http.createServer((req, res) => {
     // CORS headers
@@ -141,9 +261,65 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    if (req.url === '/api/thermostat/config') {
+        if (req.method === 'GET') {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(thermostatConfig));
+            return;
+        } else if (req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => { body += chunk.toString(); });
+            req.on('end', () => {
+                try {
+                    const update = JSON.parse(body);
+
+                    // Mise à jour config
+                    if (update.enabled !== undefined) thermostatConfig.enabled = update.enabled;
+                    if (update.targetTemp !== undefined) {
+                        thermostatConfig.targetTemp = Math.max(15, Math.min(25, parseFloat(update.targetTemp)));
+                    }
+                    if (update.hysteresis !== undefined) {
+                        thermostatConfig.hysteresis = Math.max(0.5, Math.min(3, parseFloat(update.hysteresis)));
+                    }
+                    if (update.minCycleDuration !== undefined) {
+                        thermostatConfig.minCycleDuration = Math.max(60, parseInt(update.minCycleDuration));
+                    }
+
+                    saveThermostatConfig();
+
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ success: true, config: thermostatConfig }));
+                } catch (error) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: error.message }));
+                }
+            });
+            return;
+        }
+    }
+
+    if (req.url === '/api/thermostat/state') {
+        const state = {
+            ...thermostatState,
+            relayOn: getRelayState(),
+            tempDiff: thermostatData.temperature !== null
+                ? (thermostatData.temperature - thermostatConfig.targetTemp).toFixed(1)
+                : null
+        };
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(state));
+        return;
+    }
+
     // Routes API - Contrôle relais
     if (req.url === '/api/relay/on') {
         try {
+            // Si mode auto activé, refuser commande manuelle
+            if (thermostatConfig.enabled) {
+                res.writeHead(403, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Mode automatique activé' }));
+                return;
+            }
             setRelay(true);
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ success: true, state: 'ON' }));
@@ -156,6 +332,12 @@ const server = http.createServer((req, res) => {
 
     if (req.url === '/api/relay/off') {
         try {
+            // Si mode auto activé, refuser commande manuelle
+            if (thermostatConfig.enabled) {
+                res.writeHead(403, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Mode automatique activé' }));
+                return;
+            }
             setRelay(false);
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ success: true, state: 'OFF' }));
@@ -238,9 +420,13 @@ server.listen(PORT, HOSTNAME, () => {
     console.log(`\n🌡️  Thermostat:`);
     console.log(`   ${THERMOSTAT_URL}`);
     console.log(`   Rafraîchissement: ${THERMOSTAT_REFRESH_INTERVAL / 1000}s`);
+    console.log(`   Mode auto: ${thermostatConfig.enabled ? 'ACTIVÉ' : 'désactivé'}`);
+    console.log(`   Consigne: ${thermostatConfig.targetTemp}°C`);
+    console.log(`   Hystérésis: ±${(thermostatConfig.hysteresis / 2).toFixed(2)}°C`);
+    console.log(`   Délai min: ${thermostatConfig.minCycleDuration}s`);
     console.log(`\n🔌 Proxy ebusd:`);
     console.log(`   http://localhost:${PORT}/api/data/`);
-    console.log(`\n💡 Test: curl http://localhost:${PORT}/api/thermostat/ambient`);
+    console.log(`\n💡 Test: curl http://localhost:${PORT}/api/thermostat/state`);
     console.log(`\n✅ ebusd: http://${EBUSD_HOST}:${EBUSD_PORT}`);
     console.log(`\n═══════════════════════════════════════════════════════\n`);
 });
