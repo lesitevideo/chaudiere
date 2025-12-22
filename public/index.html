@@ -30,7 +30,7 @@
 
         .connection-badge {
             display: inline-flex;
-            align-items: center;
+            align-items-center;
             gap: 8px;
         }
 
@@ -97,6 +97,11 @@
             cursor: pointer;
         }
 
+        .relay-switch:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
         .status-value {
             font-size: 2.5rem;
             font-weight: 700;
@@ -150,6 +155,20 @@
             color: rgba(255, 255, 255, 0.9);
         }
 
+        .target-temp-display {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+            margin: 1rem 0;
+        }
+
+        .temp-diff {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 0.5rem;
+        }
+
         .thermostat-status {
             display: inline-block;
             padding: 4px 12px;
@@ -167,6 +186,39 @@
         .thermostat-status.error {
             background: rgba(239, 68, 68, 0.2);
             border: 1px solid rgba(239, 68, 68, 0.5);
+        }
+
+        .action-badge {
+            padding: 6px 14px;
+            border-radius: 16px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 0.5rem;
+        }
+
+        .action-badge.heating {
+            background: rgba(239, 68, 68, 0.15);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .action-badge.idle {
+            background: rgba(16, 185, 129, 0.15);
+            color: #059669;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .action-badge.waiting {
+            background: rgba(245, 158, 11, 0.15);
+            color: #d97706;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .action-badge.disabled {
+            background: rgba(107, 114, 128, 0.15);
+            color: #6b7280;
+            border: 1px solid rgba(107, 114, 128, 0.3);
         }
     </style>
 </head>
@@ -212,6 +264,8 @@
                                     <h5 class="card-title text-center mb-3">
                                         <i class="bi bi-house-door"></i> Thermostat Salon
                                     </h5>
+
+                                    <!-- Température actuelle -->
                                     <div class="text-center mb-3">
                                         <div class="ambient-temp">
                                             <i class="bi bi-thermometer-half"></i>
@@ -222,6 +276,37 @@
                                             <span id="ambientHumidity">--</span>%
                                         </div>
                                         <span class="thermostat-status" id="thermostatStatus">--</span>
+                                    </div>
+
+                                    <hr class="border-light my-3">
+
+                                    <!-- Mode automatique -->
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <span class="fw-bold">Mode automatique</span>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox"
+                                                   id="thermostatAutoSwitch" onchange="toggleThermostatMode()"
+                                                   style="width: 3em; height: 1.5em; cursor: pointer;">
+                                        </div>
+                                    </div>
+
+                                    <!-- Réglage consigne -->
+                                    <div class="text-center" id="targetTempSection">
+                                        <label class="small mb-2">CONSIGNE</label>
+                                        <div class="target-temp-display">
+                                            <span id="targetTemp">20.0</span>°C
+                                        </div>
+                                        <div class="temp-controls">
+                                            <button class="btn temp-btn" onclick="adjustTargetTemp(-0.5)">-</button>
+                                            <input type="range" class="form-range temp-slider" id="targetSlider"
+                                                   min="15" max="25" step="0.5" value="20"
+                                                   oninput="updateTargetDisplay(this.value)">
+                                            <button class="btn temp-btn" onclick="adjustTargetTemp(0.5)">+</button>
+                                        </div>
+                                        <div class="temp-diff" id="tempDiff">--</div>
+                                        <div class="mt-2">
+                                            <span class="action-badge" id="thermostatAction">Mode manuel</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -249,6 +334,9 @@
                                         </div>
                                         <div class="mt-3">
                                             <span class="badge" id="relayBadge" style="font-size: 1rem; padding: 0.5rem 1rem;">--</span>
+                                        </div>
+                                        <div class="mt-2">
+                                            <small class="text-white-50" id="relayModeInfo">Mode manuel actif</small>
                                         </div>
                                     </div>
                                 </div>
@@ -451,6 +539,8 @@
         let refreshInterval;
         let currentZ1Temp = 52.0;
         let currentDhwTemp = 55.0;
+        let currentTargetTemp = 20.0;
+        let thermostatAutoEnabled = false;
 
         function showMessage(message, type) {
             const container = document.getElementById('messageContainer');
@@ -481,6 +571,80 @@
             return path.split('.').reduce((acc, part) => acc && acc[part], obj);
         }
 
+        // Thermostat - Réglage consigne
+        function updateTargetDisplay(value) {
+            currentTargetTemp = parseFloat(value);
+            document.getElementById('targetTemp').textContent = currentTargetTemp.toFixed(1);
+        }
+
+        function adjustTargetTemp(delta) {
+            const slider = document.getElementById('targetSlider');
+            let newValue = parseFloat(slider.value) + delta;
+            newValue = Math.max(15, Math.min(25, newValue));
+            slider.value = newValue;
+            updateTargetDisplay(newValue);
+            saveTargetTemp();
+        }
+
+        async function saveTargetTemp() {
+            try {
+                const response = await fetch('/api/thermostat/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ targetTemp: currentTargetTemp })
+                });
+                const data = await response.json();
+                if (!data.success) {
+                    showMessage('<i class="bi bi-x-circle-fill"></i> Erreur sauvegarde consigne', 'error');
+                }
+            } catch (error) {
+                console.error('Erreur sauvegarde consigne:', error);
+            }
+        }
+
+        // Thermostat - Mode automatique
+        async function toggleThermostatMode() {
+            const switchEl = document.getElementById('thermostatAutoSwitch');
+            const enabled = switchEl.checked;
+
+            try {
+                const response = await fetch('/api/thermostat/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled: enabled })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    thermostatAutoEnabled = enabled;
+                    updateThermostatUI();
+                    showMessage(`<i class="bi bi-check-circle-fill"></i> Mode ${enabled ? 'automatique' : 'manuel'} activé`, 'success');
+                    loadThermostatState();
+                } else {
+                    switchEl.checked = !enabled;
+                    showMessage('<i class="bi bi-x-circle-fill"></i> Erreur changement mode', 'error');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                switchEl.checked = !enabled;
+                showMessage('<i class="bi bi-x-circle-fill"></i> Erreur de communication', 'error');
+            }
+        }
+
+        function updateThermostatUI() {
+            const relaySwitchEl = document.getElementById('relaySwitch');
+            const relayModeInfo = document.getElementById('relayModeInfo');
+
+            if (thermostatAutoEnabled) {
+                relaySwitchEl.disabled = true;
+                relayModeInfo.textContent = 'Mode automatique - contrôle manuel désactivé';
+            } else {
+                relaySwitchEl.disabled = false;
+                relayModeInfo.textContent = 'Mode manuel actif';
+            }
+        }
+
+        // Chaudière - Réglages Zone 1/ECS
         function updateZ1Display(value) {
             currentZ1Temp = parseFloat(value);
             document.getElementById('z1TempControl').textContent = currentZ1Temp.toFixed(1);
@@ -560,7 +724,7 @@
             }
         }
 
-        // Contrôle du relais avec switch
+        // Contrôle du relais avec switch (mode manuel uniquement)
         async function toggleRelay() {
             const switchEl = document.getElementById('relaySwitch');
             const isOn = switchEl.checked;
@@ -576,7 +740,11 @@
                 } else {
                     // Revenir à l'état précédent en cas d'erreur
                     switchEl.checked = !isOn;
-                    showMessage('<i class="bi bi-x-circle-fill"></i> Erreur de commande', 'error');
+                    if (data.error === 'Mode automatique activé') {
+                        showMessage('<i class="bi bi-exclamation-circle-fill"></i> Mode automatique actif - désactivez-le d\'abord', 'error');
+                    } else {
+                        showMessage('<i class="bi bi-x-circle-fill"></i> Erreur de commande', 'error');
+                    }
                 }
             } catch (error) {
                 console.error('Erreur relais:', error);
@@ -608,7 +776,74 @@
             }
         }
 
-        // Charger données thermostat
+        // Charger config thermostat
+        async function loadThermostatConfig() {
+            try {
+                const response = await fetch('/api/thermostat/config');
+                const config = await response.json();
+
+                thermostatAutoEnabled = config.enabled;
+                currentTargetTemp = config.targetTemp;
+
+                document.getElementById('thermostatAutoSwitch').checked = config.enabled;
+                document.getElementById('targetSlider').value = config.targetTemp;
+                updateTargetDisplay(config.targetTemp);
+                updateThermostatUI();
+            } catch (error) {
+                console.error('Erreur chargement config thermostat:', error);
+            }
+        }
+
+        // Charger état thermostat
+        async function loadThermostatState() {
+            try {
+                const response = await fetch('/api/thermostat/state');
+                const state = await response.json();
+
+                const actionEl = document.getElementById('thermostatAction');
+                const tempDiffEl = document.getElementById('tempDiff');
+
+                // Afficher écart température
+                if (state.tempDiff !== null) {
+                    const diff = parseFloat(state.tempDiff);
+                    tempDiffEl.textContent = diff > 0 ? `+${diff}°C` : `${diff}°C`;
+                } else {
+                    tempDiffEl.textContent = '--';
+                }
+
+                // Afficher action thermostat
+                if (!thermostatAutoEnabled) {
+                    actionEl.className = 'action-badge disabled';
+                    actionEl.textContent = 'Mode manuel';
+                } else {
+                    switch (state.currentAction) {
+                        case 'heating':
+                            actionEl.className = 'action-badge heating';
+                            actionEl.innerHTML = '<i class="bi bi-fire"></i> En chauffe';
+                            break;
+                        case 'idle':
+                            actionEl.className = 'action-badge idle';
+                            actionEl.innerHTML = '<i class="bi bi-check-circle"></i> Confort atteint';
+                            break;
+                        case 'waiting':
+                            actionEl.className = 'action-badge waiting';
+                            actionEl.innerHTML = '<i class="bi bi-clock"></i> En attente';
+                            break;
+                        case 'error':
+                            actionEl.className = 'action-badge error';
+                            actionEl.innerHTML = '<i class="bi bi-x-circle"></i> Erreur capteur';
+                            break;
+                        default:
+                            actionEl.className = 'action-badge disabled';
+                            actionEl.textContent = 'Inactif';
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur état thermostat:', error);
+            }
+        }
+
+        // Charger données thermostat (température ambiante)
         async function loadThermostatData() {
             try {
                 const response = await fetch('/api/thermostat/ambient');
@@ -725,12 +960,16 @@
         // Charger les données au démarrage
         window.addEventListener('DOMContentLoaded', () => {
             loadData();
+            loadThermostatConfig();
             loadThermostatData();
+            loadThermostatState();
             updateRelayStatus();
+
             // Actualiser toutes les 10 secondes
             refreshInterval = setInterval(() => {
                 loadData();
                 loadThermostatData();
+                loadThermostatState();
                 updateRelayStatus();
             }, 10000);
         });

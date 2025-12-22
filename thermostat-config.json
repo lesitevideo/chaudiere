@@ -1,0 +1,6 @@
+{
+  "enabled": false,
+  "targetTemp": 20.0,
+  "hysteresis": 1.5,
+  "minCycleDuration": 450
+}
