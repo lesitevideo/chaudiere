@@ -184,7 +184,7 @@ function regulateThermostat() {
 
     const currentTemp = thermostatData.temperature;
     const target = thermostatConfig.targetTemp;
-    const halfHyst = thermostatConfig.hysteresis / 2;
+    const hysteresis = thermostatConfig.hysteresis;
 
     const now = Date.now();
     const timeSinceChange = thermostatState.lastRelayChange
@@ -196,33 +196,38 @@ function regulateThermostat() {
     // Vérifier délai minimum
     const canChange = timeSinceChange >= thermostatConfig.minCycleDuration;
 
+    // Logique d'hystérésis asymétrique :
+    // - Démarrage chauffage si temp < (target - hysteresis)
+    // - Arrêt chauffage si temp >= target
+    // Cela évite de chauffer au-dessus de la consigne
+
     // Demande de chauffage
-    if (currentTemp < (target - halfHyst)) {
+    if (currentTemp < (target - hysteresis)) {
         if (!relayState && canChange) {
             setRelay(true);
             thermostatState.lastRelayChange = now;
             thermostatState.currentAction = 'heating';
-            console.log(`🔥 Thermostat AUTO: Chauffe (${currentTemp.toFixed(1)}°C < ${(target - halfHyst).toFixed(1)}°C)`);
+            console.log(`🔥 Thermostat AUTO: Chauffe (${currentTemp.toFixed(1)}°C < ${(target - hysteresis).toFixed(1)}°C)`);
         } else if (!relayState && !canChange) {
             thermostatState.currentAction = 'waiting';
         } else {
             thermostatState.currentAction = 'heating';
         }
     }
-    // Arrêt chauffage
-    else if (currentTemp > (target + halfHyst)) {
+    // Arrêt chauffage - dès qu'on atteint ou dépasse la cible
+    else if (currentTemp >= target) {
         if (relayState && canChange) {
             setRelay(false);
             thermostatState.lastRelayChange = now;
             thermostatState.currentAction = 'idle';
-            console.log(`✓ Thermostat AUTO: Arrêt (${currentTemp.toFixed(1)}°C > ${(target + halfHyst).toFixed(1)}°C)`);
+            console.log(`✓ Thermostat AUTO: Arrêt (${currentTemp.toFixed(1)}°C >= ${target.toFixed(1)}°C)`);
         } else if (relayState && !canChange) {
             thermostatState.currentAction = 'waiting';
         } else {
             thermostatState.currentAction = 'idle';
         }
     }
-    // Zone d'hystérésis - maintenir état
+    // Zone d'hystérésis - maintenir chauffage entre (target - hysteresis) et target
     else {
         if (!canChange) {
             thermostatState.currentAction = 'waiting';
@@ -422,7 +427,7 @@ server.listen(PORT, HOSTNAME, () => {
     console.log(`   Rafraîchissement: ${THERMOSTAT_REFRESH_INTERVAL / 1000}s`);
     console.log(`   Mode auto: ${thermostatConfig.enabled ? 'ACTIVÉ' : 'désactivé'}`);
     console.log(`   Consigne: ${thermostatConfig.targetTemp}°C`);
-    console.log(`   Hystérésis: ±${(thermostatConfig.hysteresis / 2).toFixed(2)}°C`);
+    console.log(`   Hystérésis: -${thermostatConfig.hysteresis.toFixed(1)}°C (arrêt à consigne)`);
     console.log(`   Délai min: ${thermostatConfig.minCycleDuration}s`);
     console.log(`\n🔌 Proxy ebusd:`);
     console.log(`   http://localhost:${PORT}/api/data/`);
