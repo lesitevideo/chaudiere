@@ -655,91 +655,83 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // Fonction helper pour extraire valeurs ebusd
+    function getEbusValue(data, messageName, fieldName) {
+        try {
+            return data?.boiler?.messages?.[messageName]?.fields?.[fieldName]?.value;
+        } catch (e) {
+            return null;
+        }
+    }
+
     // Route API - Régulation climatique Zone 1
     if (req.url === '/api/climate/zone1') {
-        const climateParams = [
-            'ext_temp',
-            'z1_thermoreg_slope',
-            'z1_thermoreg_offset',
-            'z1_thermoreg_type',
-            'z1_target_temp',
-            'z1_water_max_temp',
-            'z1_water_min_temp',
-            'z1_day_temp',
-            'z1_night_temp',
-            'z1_fixed_temp'
-        ];
+        fetchEbusdData('/data/')
+            .then(allData => {
+                const climateData = {
+                    ext_temp: { value: getEbusValue(allData, 'ext_temp', 'value') },
+                    z1_thermoreg_slope: { value: getEbusValue(allData, 'z1_thermoreg_slope', 'value') },
+                    z1_thermoreg_offset: { value: getEbusValue(allData, 'z1_thermoreg_offset', 'value') },
+                    z1_thermoreg_type: { value: getEbusValue(allData, 'z1_thermoreg_type', 'value') },
+                    z1_target_temp: { value: getEbusValue(allData, 'z1_target_temp', 'value') },
+                    z1_water_max_temp: { value: getEbusValue(allData, 'z1_water_max_temp', 'value') },
+                    z1_water_min_temp: { value: getEbusValue(allData, 'z1_water_min_temp', 'value') },
+                    z1_day_temp: { value: getEbusValue(allData, 'z1_day_temp', 'value') },
+                    z1_night_temp: { value: getEbusValue(allData, 'z1_night_temp', 'value') },
+                    z1_fixed_temp: { value: getEbusValue(allData, 'z1_fixed_temp', 'value') }
+                };
 
-        Promise.all(
-            climateParams.map(param =>
-                fetchEbusdData(`/data/boiler/${param}`)
-                    .then(data => ({ param, data }))
-                    .catch(err => ({ param, data: null, error: err.message }))
-            )
-        ).then(results => {
-            const climateData = {};
-            results.forEach(({ param, data, error }) => {
-                if (data && data[param]) {
-                    climateData[param] = data[param];
-                } else {
-                    climateData[param] = { value: null, error };
-                }
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(climateData));
+            })
+            .catch(error => {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: error.message }));
             });
-
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(climateData));
-        }).catch(error => {
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: error.message }));
-        });
         return;
     }
 
     // Route API - Diagnostics chaudière
     if (req.url === '/api/boiler/diagnostics') {
-        const diagnosticParams = [
-            'heating_flame',
-            'ignition_cycles',
-            'fan_speed',
-            'flame_active',
-            'water_temp_out',
-            'water_temp_in',
-            'boost_time',
-            'boiler_life_time',
-            'burner_heat_life_time'
-        ];
+        fetchEbusdData('/data/')
+            .then(allData => {
+                const diagnosticData = {
+                    heating_flame: { value: getEbusValue(allData, 'heating_flame', 'onoff') },
+                    ignition_cycles: { value: getEbusValue(allData, 'ignition_cycles', 'value') },
+                    fan_speed: { value: getEbusValue(allData, 'fan_speed', 'value') },
+                    flame_active: { value: getEbusValue(allData, 'flame_active', 'onoff') },
+                    water_temp_out: { value: getEbusValue(allData, 'water_temp_out', 'value') },
+                    water_temp_in: { value: getEbusValue(allData, 'water_temp_in', 'value') },
+                    boost_time: { value: getEbusValue(allData, 'boost_time', 'value') },
+                    boiler_life_time: { value: getEbusValue(allData, 'boiler_life_time', 'value') },
+                    burner_heat_life_time: { value: getEbusValue(allData, 'burner_heat_life_time', 'value') }
+                };
 
-        Promise.all(
-            diagnosticParams.map(param =>
-                fetchEbusdData(`/data/boiler/${param}`)
-                    .then(data => ({ param, data }))
-                    .catch(err => ({ param, data: null, error: err.message }))
-            )
-        ).then(results => {
-            const diagnosticData = {};
-            results.forEach(({ param, data, error }) => {
-                if (data && data[param]) {
-                    diagnosticData[param] = data[param];
-                } else {
-                    diagnosticData[param] = { value: null, error };
-                }
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(diagnosticData));
+            })
+            .catch(error => {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: error.message }));
             });
-
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(diagnosticData));
-        }).catch(error => {
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: error.message }));
-        });
         return;
     }
 
     // Route API - Erreurs chaudière
     if (req.url === '/api/boiler/errors') {
-        fetchEbusdData('/data/boiler/error_slot_9')
-            .then(data => {
+        fetchEbusdData('/data/')
+            .then(allData => {
+                const fields = allData?.boiler?.messages?.error_slot_9?.fields || {};
+                const errorData = {
+                    error_code: { value: fields.error_code?.value },
+                    zone: { value: fields.zone?.value },
+                    year: { value: fields.year?.value },
+                    month: { value: fields.month?.value },
+                    day: { value: fields.day?.value },
+                    time: { value: fields.time?.value }
+                };
                 res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify(data.error_slot_9 || { value: null }));
+                res.end(JSON.stringify(errorData));
             })
             .catch(error => {
                 res.writeHead(500, { 'Content-Type': 'application/json' });
