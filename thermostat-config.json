@@ -14,7 +14,7 @@
       "description": "Température agréable toute la journée",
       "schedule": [
         { "from": "00:00", "to": "06:00", "temp": 18.0 },
-        { "from": "06:00", "to": "23:00", "temp": 21.0 },
+        { "from": "06:00", "to": "23:00", "temp": 20.0 },
         { "from": "23:00", "to": "00:00", "temp": 18.0 }
       ]
     },
