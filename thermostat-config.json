@@ -1,6 +1,58 @@
 {
+  "mode": "auto",
   "enabled": false,
   "targetTemp": 20.0,
   "hysteresis": 1.0,
-  "minCycleDuration": 400
+  "minCycleDuration": 600,
+  "programmedMode": {
+    "activePreset": "confort",
+    "override": null
+  },
+  "presets": {
+    "confort": {
+      "name": "Confort",
+      "description": "Température agréable toute la journée",
+      "schedule": [
+        { "from": "00:00", "to": "06:00", "temp": 18.0 },
+        { "from": "06:00", "to": "23:00", "temp": 21.0 },
+        { "from": "23:00", "to": "00:00", "temp": 18.0 }
+      ]
+    },
+    "eco": {
+      "name": "Éco",
+      "description": "Économies quand absent la journée",
+      "schedule": [
+        { "from": "00:00", "to": "06:00", "temp": 17.0 },
+        { "from": "06:00", "to": "08:00", "temp": 19.5 },
+        { "from": "08:00", "to": "18:00", "temp": 18.0 },
+        { "from": "18:00", "to": "23:00", "temp": 19.5 },
+        { "from": "23:00", "to": "00:00", "temp": 17.0 }
+      ]
+    },
+    "teletravail": {
+      "name": "Télétravail",
+      "description": "Confort en journée pour travail à domicile",
+      "schedule": [
+        { "from": "00:00", "to": "06:00", "temp": 18.0 },
+        { "from": "06:00", "to": "12:00", "temp": 21.0 },
+        { "from": "12:00", "to": "14:00", "temp": 20.0 },
+        { "from": "14:00", "to": "23:00", "temp": 21.0 },
+        { "from": "23:00", "to": "00:00", "temp": 18.0 }
+      ]
+    },
+    "nuit": {
+      "name": "Nuit",
+      "description": "Température basse constante",
+      "schedule": [
+        { "from": "00:00", "to": "00:00", "temp": 18.0 }
+      ]
+    },
+    "absence": {
+      "name": "Absence",
+      "description": "Mode hors gel pour absences prolongées",
+      "schedule": [
+        { "from": "00:00", "to": "00:00", "temp": 16.0 }
+      ]
+    }
+  }
 }

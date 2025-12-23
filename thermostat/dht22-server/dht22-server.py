@@ -4,7 +4,7 @@ Serveur DHT22 pour thermostat salon - VERSION PIGPIO
 Utilise pigpio pour meilleur timing
 """
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import pigpio
 import time
 from threading import Thread, Lock
@@ -13,6 +13,7 @@ app = Flask(__name__)
 
 # Configuration
 DHT_PIN = 4  # GPIO4
+LED_PIN = 17  # GPIO17 pour LED chauffage
 READING_INTERVAL = 60
 MAX_RETRIES = 3
 
@@ -25,11 +26,21 @@ sensor_data = {
 }
 data_lock = Lock()
 
+led_state = {
+    'heating': False
+}
+led_lock = Lock()
+
 # Initialiser pigpio
 pi = pigpio.pi()
 if not pi.connected:
     print("ERREUR: pigpiod non démarré. Lancer: sudo systemctl start pigpiod")
     exit(1)
+
+# Configurer LED
+pi.set_mode(LED_PIN, pigpio.OUTPUT)
+pi.write(LED_PIN, 0)  # LED éteinte au démarrage
+print(f"LED chauffage configurée sur GPIO{LED_PIN}")
 
 def read_dht22():
     """Lit DHT22 via pigpio"""
@@ -136,6 +147,37 @@ def get_data():
 @app.route('/health')
 def health():
     return jsonify({'status': 'running', 'timestamp': int(time.time())})
+
+@app.route('/api/led/heating', methods=['POST'])
+def set_led_heating():
+    """Contrôle la LED de chauffage"""
+    try:
+        data = request.get_json()
+        if not data or 'state' not in data:
+            return jsonify({'error': 'Paramètre "state" manquant'}), 400
+
+        state = data['state']
+        if state not in ['on', 'off']:
+            return jsonify({'error': 'State doit être "on" ou "off"'}), 400
+
+        is_on = (state == 'on')
+
+        with led_lock:
+            pi.write(LED_PIN, 1 if is_on else 0)
+            led_state['heating'] = is_on
+
+        print(f"💡 LED chauffage: {state.upper()}")
+        return jsonify({'success': True, 'state': state})
+
+    except Exception as e:
+        print(f"Erreur LED: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/led/status', methods=['GET'])
+def get_led_status():
+    """Récupère l'état de la LED"""
+    with led_lock:
+        return jsonify({'heating': led_state['heating']})
 
 if __name__ == '__main__':
     sensor_thread = Thread(target=sensor_loop, daemon=True)
