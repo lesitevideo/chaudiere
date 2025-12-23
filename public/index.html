@@ -468,16 +468,16 @@
 
                                     <!-- Réglage consigne -->
                                     <div class="text-center" id="targetTempSection">
-                                        <label class="small mb-2">CONSIGNE</label>
+                                        <label class="small mb-2">CONSIGNE <span id="targetModeLabel" class="text-white-50"></span></label>
                                         <div class="target-temp-display">
                                             <span id="targetTemp">20.0</span>°C
                                         </div>
-                                        <div class="temp-controls">
-                                            <button class="btn temp-btn" onclick="adjustTargetTemp(-0.5)">-</button>
+                                        <div class="temp-controls" id="targetTempControls">
+                                            <button class="btn temp-btn" onclick="adjustTargetTemp(-0.5)" id="targetTempMinus">-</button>
                                             <input type="range" class="form-range temp-slider" id="targetSlider"
                                                    min="15" max="25" step="0.5" value="20"
                                                    oninput="updateTargetDisplay(this.value)">
-                                            <button class="btn temp-btn" onclick="adjustTargetTemp(0.5)">+</button>
+                                            <button class="btn temp-btn" onclick="adjustTargetTemp(0.5)" id="targetTempPlus">+</button>
                                         </div>
                                         <div class="temp-diff" id="tempDiff">--</div>
                                         <div class="mt-2">
@@ -731,7 +731,7 @@
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
-                                            <h5 class="mb-1"><i class="bi bi-power"></i> Mode automatique</h5>
+                                            <h5 class="mb-1 text-dark"><i class="bi bi-power"></i> Mode automatique</h5>
                                             <small class="text-muted">Active le contrôle automatique du chauffage</small>
                                         </div>
                                         <div class="form-check form-switch">
@@ -856,16 +856,16 @@
                                 <div class="card-body">
                                     <h6 class="text-muted mb-3"><i class="bi bi-info-circle"></i> Informations</h6>
                                     <div class="info-row d-flex justify-content-between">
-                                        <span>État relais chauffage</span>
-                                        <span id="thermostatRelayState" class="fw-bold">--</span>
+                                        <span class="text-dark">État relais chauffage</span>
+                                        <span id="thermostatRelayState" class="fw-bold text-dark">--</span>
                                     </div>
                                     <div class="info-row d-flex justify-content-between">
-                                        <span>Hystérésis</span>
-                                        <span id="thermostatHysteresis" class="fw-bold">±1.0°C</span>
+                                        <span class="text-dark">Hystérésis</span>
+                                        <span id="thermostatHysteresis" class="fw-bold text-dark">±1.0°C</span>
                                     </div>
                                     <div class="info-row d-flex justify-content-between">
-                                        <span>Délai minimum cycle</span>
-                                        <span id="thermostatMinCycle" class="fw-bold">600s (10min)</span>
+                                        <span class="text-dark">Délai minimum cycle</span>
+                                        <span id="thermostatMinCycle" class="fw-bold text-dark">600s (10min)</span>
                                     </div>
                                 </div>
                             </div>
@@ -1140,8 +1140,46 @@
                 currentTargetTemp = config.targetTemp;
 
                 document.getElementById('thermostatAutoSwitch').checked = config.enabled;
-                document.getElementById('targetSlider').value = config.targetTemp;
-                updateTargetDisplay(config.targetTemp);
+
+                // Si mode programmé, afficher la consigne active du planning
+                if (config.mode === 'programmed' && config.enabled) {
+                    try {
+                        const scheduleRes = await fetch('/api/thermostat/schedule');
+                        const scheduleData = await scheduleRes.json();
+
+                        if (scheduleData.currentTargetTemp !== null) {
+                            // Afficher la température active du planning
+                            document.getElementById('targetTemp').textContent = scheduleData.currentTargetTemp.toFixed(1);
+                            document.getElementById('targetSlider').value = scheduleData.currentTargetTemp;
+
+                            // Indiquer que c'est le mode programmé
+                            document.getElementById('targetModeLabel').textContent = '(Programmé)';
+
+                            // Désactiver les contrôles car on ne peut pas modifier manuellement
+                            document.getElementById('targetSlider').disabled = true;
+                            document.getElementById('targetTempMinus').disabled = true;
+                            document.getElementById('targetTempPlus').disabled = true;
+                            document.getElementById('targetTempControls').style.opacity = '0.5';
+                        }
+                    } catch (error) {
+                        console.error('Erreur chargement planning:', error);
+                        // En cas d'erreur, afficher la valeur par défaut
+                        document.getElementById('targetSlider').value = config.targetTemp;
+                        updateTargetDisplay(config.targetTemp);
+                    }
+                } else {
+                    // Mode auto ou manuel : afficher la consigne fixe
+                    document.getElementById('targetSlider').value = config.targetTemp;
+                    updateTargetDisplay(config.targetTemp);
+                    document.getElementById('targetModeLabel').textContent = '';
+
+                    // Réactiver les contrôles
+                    document.getElementById('targetSlider').disabled = false;
+                    document.getElementById('targetTempMinus').disabled = false;
+                    document.getElementById('targetTempPlus').disabled = false;
+                    document.getElementById('targetTempControls').style.opacity = '1';
+                }
+
                 updateThermostatUI();
             } catch (error) {
                 console.error('Erreur chargement config thermostat:', error);
