@@ -405,6 +405,27 @@
                     </button>
                 </div>
 
+                <!-- Navigation par onglets -->
+                <ul class="nav nav-tabs mb-4" id="mainTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="boiler-tab" data-bs-toggle="tab"
+                                data-bs-target="#boiler-panel" type="button" role="tab">
+                            <i class="bi bi-fire"></i> Chaudière
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="thermostat-tab" data-bs-toggle="tab"
+                                data-bs-target="#thermostat-panel" type="button" role="tab">
+                            <i class="bi bi-thermometer-half"></i> Thermostat
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Contenu des onglets -->
+                <div class="tab-content" id="mainTabsContent">
+                    <!-- ONGLET CHAUDIERE -->
+                    <div class="tab-pane fade show active" id="boiler-panel" role="tabpanel">
+
                 <!-- Contrôles -->
                 <section class="mb-5">
                     <h2 class="section-title">
@@ -677,6 +698,184 @@
                         </div>
                     </div>
                 </section>
+
+                    </div>
+                    <!-- FIN ONGLET CHAUDIERE -->
+
+                    <!-- ONGLET THERMOSTAT -->
+                    <div class="tab-pane fade" id="thermostat-panel" role="tabpanel">
+
+                        <!-- Température ambiante -->
+                        <section class="mb-4">
+                            <div class="card control-card">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title mb-3">
+                                        <i class="bi bi-house-door"></i> Salon
+                                    </h5>
+                                    <div class="ambient-temp">
+                                        <i class="bi bi-thermometer-half"></i>
+                                        <span id="thermostatAmbientTemp">--</span>°C
+                                    </div>
+                                    <div class="humidity-value mt-2">
+                                        <i class="bi bi-droplet"></i>
+                                        <span id="thermostatAmbientHumidity">--</span>%
+                                    </div>
+                                    <span class="thermostat-status mt-2" id="thermostatStatusTab">--</span>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Activation mode automatique -->
+                        <section class="mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h5 class="mb-1"><i class="bi bi-power"></i> Mode automatique</h5>
+                                            <small class="text-muted">Active le contrôle automatique du chauffage</small>
+                                        </div>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox"
+                                                   id="thermostatEnabledSwitch" onchange="toggleThermostatEnabled()"
+                                                   style="width: 3em; height: 1.5em; cursor: pointer;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Sélection du mode (visible si activé) -->
+                        <section class="mb-4" id="modeSection" style="display: none;">
+                            <div class="card control-card">
+                                <div class="card-body">
+                                    <h5 class="card-title text-center mb-3">
+                                        <i class="bi bi-gear"></i> Mode de fonctionnement
+                                    </h5>
+
+                                    <div class="mode-selector">
+                                        <button class="mode-btn" id="modeManualBtn" onclick="setThermostatMode('manual')">
+                                            <i class="bi bi-hand-index"></i><br>Manuel
+                                        </button>
+                                        <button class="mode-btn active" id="modeAutoBtn" onclick="setThermostatMode('auto')">
+                                            <i class="bi bi-thermometer"></i><br>Auto
+                                        </button>
+                                        <button class="mode-btn" id="modeProgrammedBtn" onclick="setThermostatMode('programmed')">
+                                            <i class="bi bi-calendar-week"></i><br>Programmé
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Section mode Auto -->
+                        <section class="mb-4" id="autoModeSection" style="display: none;">
+                            <div class="card control-card">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title mb-3">
+                                        <i class="bi bi-bullseye"></i> Consigne fixe
+                                    </h5>
+                                    <div class="target-temp-display">
+                                        <span id="autoTargetTemp">20.0</span>°C
+                                    </div>
+                                    <div class="temp-controls">
+                                        <button class="btn temp-btn" onclick="adjustAutoTargetTemp(-0.5)">-</button>
+                                        <input type="range" class="form-range temp-slider" id="autoTargetSlider"
+                                               min="15" max="25" step="0.5" value="20"
+                                               oninput="updateAutoTargetDisplay(this.value)">
+                                        <button class="btn temp-btn" onclick="adjustAutoTargetTemp(0.5)">+</button>
+                                    </div>
+                                    <div class="mt-3">
+                                        <span class="action-badge" id="thermostatActionBadge">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Section mode Programmé -->
+                        <section class="mb-4" id="programmedModeSection" style="display: none;">
+
+                            <!-- Override actif -->
+                            <div id="overrideBanner" class="override-banner" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="bi bi-lightning-fill"></i>
+                                        <strong>Boost actif :</strong>
+                                        <span id="overrideTempText">22°C</span>
+                                        <span id="overrideTimeText">(expire dans 45min)</span>
+                                    </div>
+                                    <button class="btn btn-sm btn-light" onclick="cancelOverride()">
+                                        <i class="bi bi-x-lg"></i> Annuler
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Sélection preset -->
+                            <div class="card control-card mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title text-center mb-3">
+                                        <i class="bi bi-calendar-week"></i> Planning actif
+                                    </h5>
+
+                                    <div class="row g-3" id="presetsContainer">
+                                        <!-- Les presets seront ajoutés ici dynamiquement -->
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Timeline du planning -->
+                            <div class="schedule-timeline">
+                                <h6 class="text-center mb-3">
+                                    <i class="bi bi-clock"></i> Planning de la journée
+                                </h6>
+                                <div id="scheduleTimeline">
+                                    <!-- Timeline générée dynamiquement -->
+                                </div>
+                                <div class="text-center mt-3" id="nextTransition">
+                                    <small><i class="bi bi-arrow-right-circle"></i> Prochaine transition : --</small>
+                                </div>
+                                <div class="text-center mt-2">
+                                    <strong>Consigne actuelle : <span id="currentTargetDisplay">--</span>°C</strong>
+                                </div>
+                            </div>
+
+                            <!-- Boutons boost -->
+                            <div class="text-center mt-3">
+                                <h6 class="text-muted mb-2">Actions rapides</h6>
+                                <button class="boost-btn me-2" onclick="applyBoost(21, 60)">
+                                    <i class="bi bi-fire"></i> +1°C pendant 1h
+                                </button>
+                                <button class="boost-btn" onclick="applyBoost(22, 120)">
+                                    <i class="bi bi-fire"></i> +2°C pendant 2h
+                                </button>
+                            </div>
+                        </section>
+
+                        <!-- État du système -->
+                        <section class="mb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="text-muted mb-3"><i class="bi bi-info-circle"></i> Informations</h6>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span>État relais chauffage</span>
+                                        <span id="thermostatRelayState" class="fw-bold">--</span>
+                                    </div>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span>Hystérésis</span>
+                                        <span id="thermostatHysteresis" class="fw-bold">±1.0°C</span>
+                                    </div>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span>Délai minimum cycle</span>
+                                        <span id="thermostatMinCycle" class="fw-bold">600s (10min)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                    </div>
+                    <!-- FIN ONGLET THERMOSTAT -->
+
+                </div>
+                <!-- FIN TAB CONTENT -->
             </div>
 
             <!-- Footer -->
@@ -1119,6 +1318,7 @@
             loadThermostatData();
             loadThermostatState();
             updateRelayStatus();
+            loadThermostatTabData();  // Charger onglet thermostat
 
             // Actualiser toutes les 10 secondes
             refreshInterval = setInterval(() => {
@@ -1126,8 +1326,410 @@
                 loadThermostatData();
                 loadThermostatState();
                 updateRelayStatus();
+                loadThermostatTabData();  // Rafraîchir onglet thermostat
             }, 10000);
         });
+
+        // =========================================
+        // ONGLET THERMOSTAT - Nouvelles fonctions
+        // =========================================
+
+        let currentMode = 'auto';
+        let scheduleData = null;
+
+        // Toggle activation thermostat
+        async function toggleThermostatEnabled() {
+            const switchEl = document.getElementById('thermostatEnabledSwitch');
+            const enabled = switchEl.checked;
+
+            try {
+                const response = await fetch('/api/thermostat/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled: enabled })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage(`<i class="bi bi-check-circle-fill"></i> Thermostat ${enabled ? 'activé' : 'désactivé'}`, 'success');
+                    updateThermostatTabUI();
+                    loadThermostatTabData();
+                } else {
+                    switchEl.checked = !enabled;
+                    showMessage('<i class="bi bi-x-circle-fill"></i> Erreur', 'error');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                switchEl.checked = !enabled;
+            }
+        }
+
+        // Changer de mode (manual/auto/programmed)
+        async function setThermostatMode(mode) {
+            try {
+                const response = await fetch('/api/thermostat/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode: mode, enabled: true })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    currentMode = mode;
+                    updateModeSelectorUI();
+                    showMessage(`<i class="bi bi-check-circle-fill"></i> Mode ${mode} activé`, 'success');
+                    loadScheduleData();
+                } else {
+                    showMessage('<i class="bi bi-x-circle-fill"></i> Erreur changement mode', 'error');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        // Mise à jour UI sélecteur de mode
+        function updateModeSelectorUI() {
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+
+            if (currentMode === 'manual') {
+                document.getElementById('modeManualBtn').classList.add('active');
+                document.getElementById('autoModeSection').style.display = 'none';
+                document.getElementById('programmedModeSection').style.display = 'none';
+            } else if (currentMode === 'auto') {
+                document.getElementById('modeAutoBtn').classList.add('active');
+                document.getElementById('autoModeSection').style.display = 'block';
+                document.getElementById('programmedModeSection').style.display = 'none';
+            } else if (currentMode === 'programmed') {
+                document.getElementById('modeProgrammedBtn').classList.add('active');
+                document.getElementById('autoModeSection').style.display = 'none';
+                document.getElementById('programmedModeSection').style.display = 'block';
+            }
+        }
+
+        // Mode Auto - Réglage consigne
+        function updateAutoTargetDisplay(value) {
+            const temp = parseFloat(value);
+            document.getElementById('autoTargetTemp').textContent = temp.toFixed(1);
+        }
+
+        function adjustAutoTargetTemp(delta) {
+            const slider = document.getElementById('autoTargetSlider');
+            let newValue = parseFloat(slider.value) + delta;
+            newValue = Math.max(15, Math.min(25, newValue));
+            slider.value = newValue;
+            updateAutoTargetDisplay(newValue);
+            saveAutoTargetTemp(newValue);
+        }
+
+        async function saveAutoTargetTemp(temp) {
+            try {
+                await fetch('/api/thermostat/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ targetTemp: temp })
+                });
+            } catch (error) {
+                console.error('Erreur sauvegarde:', error);
+            }
+        }
+
+        // Mode Programmé - Charger planning et presets
+        async function loadScheduleData() {
+            try {
+                const response = await fetch('/api/thermostat/schedule');
+                scheduleData = await response.json();
+
+                renderPresets();
+                renderScheduleTimeline();
+                updateOverrideBanner();
+            } catch (error) {
+                console.error('Erreur chargement planning:', error);
+            }
+        }
+
+        // Afficher les cartes de presets
+        function renderPresets() {
+            if (!scheduleData || !scheduleData.allPresets) return;
+
+            const container = document.getElementById('presetsContainer');
+            container.innerHTML = '';
+
+            scheduleData.allPresets.forEach(preset => {
+                const isActive = preset.id === scheduleData.activePreset;
+                const col = document.createElement('div');
+                col.className = 'col-md-6';
+                col.innerHTML = `
+                    <div class="preset-card ${isActive ? 'active' : ''}" onclick="selectPreset('${preset.id}')">
+                        <div class="preset-title">${preset.name}</div>
+                        <div class="preset-description">${preset.description}</div>
+                    </div>
+                `;
+                container.appendChild(col);
+            });
+        }
+
+        // Sélectionner un preset
+        async function selectPreset(presetId) {
+            try {
+                const response = await fetch('/api/thermostat/preset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ preset: presetId })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage(`<i class="bi bi-check-circle-fill"></i> Preset ${presetId} activé`, 'success');
+                    loadScheduleData();
+                } else {
+                    showMessage('<i class="bi bi-x-circle-fill"></i> Erreur', 'error');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        // Générer timeline visuelle
+        function renderScheduleTimeline() {
+            if (!scheduleData || !scheduleData.preset || !scheduleData.preset.schedule) return;
+
+            const schedule = scheduleData.preset.schedule;
+            const container = document.getElementById('scheduleTimeline');
+
+            // Si planning constant (00:00-00:00)
+            if (schedule.length === 1 && schedule[0].from === '00:00' && schedule[0].to === '00:00') {
+                container.innerHTML = `
+                    <div class="timeline-bar">
+                        <div class="timeline-slot" style="flex: 1; background: rgba(239, 68, 68, 0.7);">
+                            ${schedule[0].temp.toFixed(1)}°C
+                        </div>
+                    </div>
+                    <div class="text-center mt-2">
+                        <small>Température constante 24h/24</small>
+                    </div>
+                `;
+            } else {
+                // Timeline avec plages horaires
+                let html = '<div class="timeline-bar">';
+                let labelsHtml = '<div class="timeline-labels">';
+
+                schedule.forEach((slot, idx) => {
+                    const from = timeToMinutes(slot.from);
+                    const to = timeToMinutes(slot.to);
+                    let duration = to > from ? to - from : (1440 - from + to);
+                    const flex = duration / 1440;
+
+                    const color = slot.temp >= 21 ? 'rgba(239, 68, 68, 0.7)' :
+                                  slot.temp >= 19 ? 'rgba(245, 158, 11, 0.7)' :
+                                  'rgba(59, 130, 246, 0.7)';
+
+                    html += `<div class="timeline-slot" style="flex: ${flex}; background: ${color};">
+                        ${slot.temp.toFixed(1)}°C
+                    </div>`;
+
+                    labelsHtml += `<div class="timeline-label" style="flex: ${flex};">
+                        ${slot.from}
+                    </div>`;
+                });
+
+                html += '</div>';
+                labelsHtml += '</div>';
+                container.innerHTML = html + labelsHtml;
+
+                // Calculer prochaine transition
+                calculateNextTransition(schedule);
+            }
+
+            // Afficher consigne actuelle
+            if (scheduleData.currentTargetTemp !== null) {
+                document.getElementById('currentTargetDisplay').textContent =
+                    scheduleData.currentTargetTemp.toFixed(1);
+            }
+        }
+
+        function timeToMinutes(timeStr) {
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        }
+
+        function calculateNextTransition(schedule) {
+            const now = new Date();
+            const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+            for (let i = 0; i < schedule.length; i++) {
+                const slot = schedule[i];
+                const toMin = timeToMinutes(slot.to);
+
+                if (toMin > nowMinutes) {
+                    const nextSlot = schedule[(i + 1) % schedule.length];
+                    const diff = toMin - nowMinutes;
+                    const hours = Math.floor(diff / 60);
+                    const minutes = diff % 60;
+
+                    let timeText = '';
+                    if (hours > 0) timeText += `${hours}h`;
+                    if (minutes > 0) timeText += `${minutes}min`;
+
+                    document.getElementById('nextTransition').innerHTML =
+                        `<small><i class="bi bi-arrow-right-circle"></i> Prochaine transition : ` +
+                        `${slot.temp.toFixed(1)}°C → ${nextSlot.temp.toFixed(1)}°C à ${slot.to} (dans ${timeText})</small>`;
+                    return;
+                }
+            }
+        }
+
+        // Boost / Override
+        async function applyBoost(temp, durationMinutes) {
+            try {
+                const response = await fetch('/api/thermostat/override', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ temp: temp, durationMinutes: durationMinutes })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage(`<i class="bi bi-fire"></i> Boost activé : ${temp}°C pendant ${durationMinutes}min`, 'success');
+                    loadScheduleData();
+                } else {
+                    showMessage('<i class="bi bi-x-circle-fill"></i> Erreur', 'error');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        async function cancelOverride() {
+            try {
+                const response = await fetch('/api/thermostat/override', { method: 'DELETE' });
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('<i class="bi bi-check-circle-fill"></i> Boost annulé', 'success');
+                    loadScheduleData();
+                } else {
+                    showMessage('<i class="bi bi-x-circle-fill"></i> Erreur', 'error');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        function updateOverrideBanner() {
+            const banner = document.getElementById('overrideBanner');
+            if (!scheduleData || !scheduleData.override) {
+                banner.style.display = 'none';
+                return;
+            }
+
+            const override = scheduleData.override;
+            const now = Date.now();
+            const remaining = override.expiresAt - now;
+
+            if (remaining > 0) {
+                const minutes = Math.ceil(remaining / 60000);
+                document.getElementById('overrideTempText').textContent = `${override.temp.toFixed(1)}°C`;
+                document.getElementById('overrideTimeText').textContent = `(expire dans ${minutes}min)`;
+                banner.style.display = 'block';
+            } else {
+                banner.style.display = 'none';
+            }
+        }
+
+        // Mise à jour UI onglet thermostat
+        function updateThermostatTabUI() {
+            const config = thermostatConfig || {};
+            const enabled = config.enabled || false;
+
+            document.getElementById('thermostatEnabledSwitch').checked = enabled;
+            document.getElementById('modeSection').style.display = enabled ? 'block' : 'none';
+
+            if (enabled) {
+                currentMode = config.mode || 'auto';
+                updateModeSelectorUI();
+            }
+        }
+
+        // Charger données onglet thermostat
+        async function loadThermostatTabData() {
+            try {
+                // Charger config
+                const configRes = await fetch('/api/thermostat/config');
+                thermostatConfig = await configRes.json();
+
+                // Température ambiante
+                const ambientRes = await fetch('/api/thermostat/ambient');
+                const ambientData = await ambientRes.json();
+
+                document.getElementById('thermostatAmbientTemp').textContent =
+                    ambientData.temperature !== null ? ambientData.temperature.toFixed(1) : '--';
+                document.getElementById('thermostatAmbientHumidity').textContent =
+                    ambientData.humidity !== null ? ambientData.humidity.toFixed(1) : '--';
+
+                const statusEl = document.getElementById('thermostatStatusTab');
+                if (ambientData.status === 'ok') {
+                    statusEl.className = 'thermostat-status ok';
+                    statusEl.textContent = 'En ligne';
+                } else {
+                    statusEl.className = 'thermostat-status error';
+                    statusEl.textContent = ambientData.status || 'Erreur';
+                }
+
+                // État thermostat
+                const stateRes = await fetch('/api/thermostat/state');
+                const stateData = await stateRes.json();
+
+                document.getElementById('thermostatRelayState').textContent =
+                    stateData.relayOn ? 'ALLUMÉ' : 'ÉTEINT';
+
+                const actionEl = document.getElementById('thermostatActionBadge');
+                switch (stateData.currentAction) {
+                    case 'heating':
+                        actionEl.className = 'action-badge heating';
+                        actionEl.innerHTML = '<i class="bi bi-fire"></i> En chauffe';
+                        break;
+                    case 'idle':
+                        actionEl.className = 'action-badge idle';
+                        actionEl.innerHTML = '<i class="bi bi-check-circle"></i> Confort atteint';
+                        break;
+                    case 'waiting':
+                        actionEl.className = 'action-badge waiting';
+                        actionEl.innerHTML = '<i class="bi bi-clock"></i> En attente';
+                        break;
+                    default:
+                        actionEl.className = 'action-badge disabled';
+                        actionEl.textContent = 'Inactif';
+                }
+
+                // Mettre à jour affichage config
+                if (thermostatConfig.targetTemp) {
+                    document.getElementById('autoTargetSlider').value = thermostatConfig.targetTemp;
+                    updateAutoTargetDisplay(thermostatConfig.targetTemp);
+                }
+
+                if (thermostatConfig.hysteresis) {
+                    document.getElementById('thermostatHysteresis').textContent =
+                        `${thermostatConfig.hysteresis.toFixed(1)}°C`;
+                }
+
+                if (thermostatConfig.minCycleDuration) {
+                    const seconds = thermostatConfig.minCycleDuration;
+                    const minutes = Math.floor(seconds / 60);
+                    document.getElementById('thermostatMinCycle').textContent =
+                        `${seconds}s (${minutes}min)`;
+                }
+
+                updateThermostatTabUI();
+
+                // Si mode programmé, charger planning
+                if (thermostatConfig.mode === 'programmed') {
+                    loadScheduleData();
+                }
+
+            } catch (error) {
+                console.error('Erreur chargement données thermostat:', error);
+            }
+        }
 
         // Arrêter l'actualisation quand la page est fermée
         window.addEventListener('beforeunload', () => {
