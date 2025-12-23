@@ -1534,10 +1534,10 @@
                                 thermoregType !== null && thermoregType !== undefined ? thermoregType : 'Non disponible';
                 document.getElementById('climateThermoregType').textContent = typeText;
 
-                // Pente de la courbe (divisée par 100)
+                // Pente de la courbe (ebusd a déjà divisé par 100)
                 const slope = data.z1_thermoreg_slope?.value;
                 document.getElementById('climateThermoregSlope').textContent =
-                    slope !== null && slope !== undefined ? (slope / 100).toFixed(2) : '--';
+                    slope !== null && slope !== undefined ? slope.toFixed(2) : '--';
 
                 // Offset
                 const offset = data.z1_thermoreg_offset?.value;
