@@ -669,16 +669,16 @@ const server = http.createServer((req, res) => {
         fetchEbusdData('/data/')
             .then(allData => {
                 const climateData = {
-                    ext_temp: { value: getEbusValue(allData, 'ext_temp', 'value') },
-                    z1_thermoreg_slope: { value: getEbusValue(allData, 'z1_thermoreg_slope', 'value') },
-                    z1_thermoreg_offset: { value: getEbusValue(allData, 'z1_thermoreg_offset', 'value') },
-                    z1_thermoreg_type: { value: getEbusValue(allData, 'z1_thermoreg_type', 'value') },
-                    z1_target_temp: { value: getEbusValue(allData, 'z1_target_temp', 'value') },
-                    z1_water_max_temp: { value: getEbusValue(allData, 'z1_water_max_temp', 'value') },
-                    z1_water_min_temp: { value: getEbusValue(allData, 'z1_water_min_temp', 'value') },
-                    z1_day_temp: { value: getEbusValue(allData, 'z1_day_temp', 'value') },
-                    z1_night_temp: { value: getEbusValue(allData, 'z1_night_temp', 'value') },
-                    z1_fixed_temp: { value: getEbusValue(allData, 'z1_fixed_temp', 'value') }
+                    ext_temp: { value: getEbusValue(allData, 'ext_temp', '0') },
+                    z1_thermoreg_slope: { value: getEbusValue(allData, 'z1_thermoreg_slope', '0') },
+                    z1_thermoreg_offset: { value: getEbusValue(allData, 'z1_thermoreg_offset', '0') },
+                    z1_thermoreg_type: { value: getEbusValue(allData, 'z1_thermoreg_type', 'thermoreg_type') },
+                    z1_target_temp: { value: getEbusValue(allData, 'z1_target_temp', '0') },
+                    z1_water_max_temp: { value: getEbusValue(allData, 'z1_water_max_temp', '0') },
+                    z1_water_min_temp: { value: getEbusValue(allData, 'z1_water_min_temp', '0') },
+                    z1_day_temp: { value: getEbusValue(allData, 'z1_day_temp', '0') },
+                    z1_night_temp: { value: getEbusValue(allData, 'z1_night_temp', '0') },
+                    z1_fixed_temp: { value: getEbusValue(allData, 'z1_fixed_temp', '0') }
                 };
 
                 res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -696,15 +696,17 @@ const server = http.createServer((req, res) => {
         fetchEbusdData('/data/')
             .then(allData => {
                 const diagnosticData = {
-                    heating_flame: { value: getEbusValue(allData, 'heating_flame', 'onoff') },
-                    ignition_cycles: { value: getEbusValue(allData, 'ignition_cycles', 'value') },
-                    fan_speed: { value: getEbusValue(allData, 'fan_speed', 'value') },
-                    flame_active: { value: getEbusValue(allData, 'flame_active', 'onoff') },
-                    water_temp_out: { value: getEbusValue(allData, 'water_temp_out', 'value') },
-                    water_temp_in: { value: getEbusValue(allData, 'water_temp_in', 'value') },
-                    boost_time: { value: getEbusValue(allData, 'boost_time', 'value') },
-                    boiler_life_time: { value: getEbusValue(allData, 'boiler_life_time', 'value') },
-                    burner_heat_life_time: { value: getEbusValue(allData, 'burner_heat_life_time', 'value') }
+                    // Ces messages ne sont pas disponibles (lastup = 0)
+                    heating_flame: { value: null },
+                    ignition_cycles: { value: null },
+                    fan_speed: { value: null },
+                    flame_active: { value: null },
+                    boiler_life_time: { value: null },
+                    burner_heat_life_time: { value: null },
+                    // Ces messages sont disponibles
+                    water_temp_out: { value: getEbusValue(allData, 'water_temp_out', '0') },
+                    water_temp_in: { value: getEbusValue(allData, 'water_temp_in', '0') },
+                    boost_time: { value: getEbusValue(allData, 'boost_time', '0') }
                 };
 
                 res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -721,14 +723,15 @@ const server = http.createServer((req, res) => {
     if (req.url === '/api/boiler/errors') {
         fetchEbusdData('/data/')
             .then(allData => {
-                const fields = allData?.boiler?.messages?.error_slot_9?.fields || {};
+                // error_slot_9 a un decodeerror, utiliser error_code à la place
+                const errorCodeMsg = allData?.boiler?.messages?.error_code;
                 const errorData = {
-                    error_code: { value: fields.error_code?.value },
-                    zone: { value: fields.zone?.value },
-                    year: { value: fields.year?.value },
-                    month: { value: fields.month?.value },
-                    day: { value: fields.day?.value },
-                    time: { value: fields.time?.value }
+                    error_code: { value: errorCodeMsg?.fields?.error_code?.value || null },
+                    zone: { value: errorCodeMsg?.fields?.zone_status?.value || null },
+                    year: { value: null },
+                    month: { value: null },
+                    day: { value: null },
+                    time: { value: null }
                 };
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify(errorData));
