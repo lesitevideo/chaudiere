@@ -220,6 +220,161 @@
             color: #6b7280;
             border: 1px solid rgba(107, 114, 128, 0.3);
         }
+
+        /* Onglets */
+        .nav-tabs {
+            border-bottom: 2px solid #667eea;
+        }
+
+        .nav-tabs .nav-link {
+            color: #667eea;
+            font-weight: 600;
+            border: none;
+            padding: 1rem 1.5rem;
+        }
+
+        .nav-tabs .nav-link:hover {
+            border: none;
+            color: #764ba2;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: white;
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 10px 10px 0 0;
+        }
+
+        /* Mode selector */
+        .mode-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .mode-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: #667eea;
+            border-color: white;
+        }
+
+        /* Presets */
+        .preset-card {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        .preset-card:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .preset-card.active {
+            background: white;
+            color: #667eea;
+            border-color: white;
+        }
+
+        .preset-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .preset-description {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        /* Timeline */
+        .schedule-timeline {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            color: white;
+        }
+
+        .timeline-bar {
+            display: flex;
+            height: 60px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .timeline-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+        }
+
+        .timeline-slot:last-child {
+            border-right: none;
+        }
+
+        .timeline-labels {
+            display: flex;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .timeline-label {
+            text-align: center;
+        }
+
+        .override-banner {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .boost-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .boost-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.6);
+            color: white;
+        }
     </style>
 </head>
 <body>

@@ -28,10 +28,16 @@ let thermostatData = {
 
 // Configuration thermostat (chargée depuis fichier)
 let thermostatConfig = {
+    mode: 'auto',  // 'manual', 'auto', 'programmed'
     enabled: false,
     targetTemp: 20.0,
-    hysteresis: 1.5,
-    minCycleDuration: 450  // 7.5 minutes en secondes
+    hysteresis: 1.0,
+    minCycleDuration: 600,
+    programmedMode: {
+        activePreset: 'confort',
+        override: null  // { temp, expiresAt }
+    },
+    presets: {}
 };
 
 // État thermostat
@@ -94,6 +100,142 @@ function getRelayState() {
         console.error('Erreur lecture GPIO:', error.message);
         return null;
     }
+}
+
+// Fonction pour mettre à jour la LED du thermostat
+function updateThermostatLED(state) {
+    const ledState = state ? 'on' : 'off';
+    const url = new URL('http://thermostat-salon.local:5000/api/led/heating');
+
+    const postData = JSON.stringify({ state: ledState });
+    const options = {
+        hostname: url.hostname,
+        port: url.port || 5000,
+        path: url.pathname,
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(postData)
+        },
+        timeout: 3000
+    };
+
+    const req = http.request(options, (res) => {
+        if (res.statusCode === 200) {
+            console.log(`💡 LED thermostat: ${ledState.toUpperCase()}`);
+        }
+    });
+
+    req.on('error', (err) => {
+        // Ne pas bloquer si la LED ne répond pas
+        console.warn(`⚠️  LED thermostat non disponible: ${err.message}`);
+    });
+
+    req.on('timeout', () => {
+        req.destroy();
+    });
+
+    req.write(postData);
+    req.end();
+}
+
+// Nettoyer les overrides expirés
+function cleanExpiredOverride() {
+    if (thermostatConfig.programmedMode.override) {
+        const now = Date.now();
+        if (now >= thermostatConfig.programmedMode.override.expiresAt) {
+            console.log('⏱️  Override expiré, retour au planning');
+            thermostatConfig.programmedMode.override = null;
+            saveThermostatConfig();
+        }
+    }
+}
+
+// Vérifier si un override est actif
+function hasActiveOverride() {
+    cleanExpiredOverride();
+    return thermostatConfig.programmedMode.override !== null;
+}
+
+// Obtenir la température de l'override
+function getOverrideTemp() {
+    if (hasActiveOverride()) {
+        return thermostatConfig.programmedMode.override.temp;
+    }
+    return null;
+}
+
+// Convertir "HH:MM" en minutes depuis minuit
+function timeToMinutes(timeStr) {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+}
+
+// Obtenir la température programmée pour un moment donné
+function getScheduledTemp(date) {
+    const preset = thermostatConfig.presets[thermostatConfig.programmedMode.activePreset];
+    if (!preset || !preset.schedule || preset.schedule.length === 0) {
+        console.warn('⚠️  Pas de planning trouvé, utilisation température par défaut');
+        return thermostatConfig.targetTemp;
+    }
+
+    const now = date.getHours() * 60 + date.getMinutes();
+
+    // Chercher la plage horaire active
+    for (let i = 0; i < preset.schedule.length; i++) {
+        const slot = preset.schedule[i];
+        const fromMin = timeToMinutes(slot.from);
+        const toMin = timeToMinutes(slot.to);
+
+        // Cas spécial: plage 00:00-00:00 = toute la journée
+        if (slot.from === '00:00' && slot.to === '00:00') {
+            return slot.temp;
+        }
+
+        // Cas normal: vérifier si l'heure actuelle est dans la plage
+        if (toMin > fromMin) {
+            // Plage normale (ex: 08:00-18:00)
+            if (now >= fromMin && now < toMin) {
+                return slot.temp;
+            }
+        } else {
+            // Plage qui traverse minuit (ex: 23:00-06:00)
+            if (now >= fromMin || now < toMin) {
+                return slot.temp;
+            }
+        }
+    }
+
+    // Si aucune plage trouvée, utiliser température par défaut
+    console.warn(`⚠️  Aucune plage horaire trouvée pour ${date.getHours()}:${date.getMinutes()}`);
+    return thermostatConfig.targetTemp;
+}
+
+// Obtenir la température cible actuelle selon le mode
+function getCurrentTargetTemp() {
+    // Mode manuel : pas de consigne auto
+    if (thermostatConfig.mode === 'manual' || !thermostatConfig.enabled) {
+        return null;
+    }
+
+    // Mode auto : consigne fixe
+    if (thermostatConfig.mode === 'auto') {
+        return thermostatConfig.targetTemp;
+    }
+
+    // Mode programmé : vérifier override puis planning
+    if (thermostatConfig.mode === 'programmed') {
+        if (hasActiveOverride()) {
+            const overrideTemp = getOverrideTemp();
+            console.log(`🔄 Override actif: ${overrideTemp}°C`);
+            return overrideTemp;
+        }
+
+        const scheduledTemp = getScheduledTemp(new Date());
+        return scheduledTemp;
+    }
+
+    return thermostatConfig.targetTemp;
 }
 
 // Fonction pour récupérer les données du thermostat
@@ -183,7 +325,14 @@ function regulateThermostat() {
     }
 
     const currentTemp = thermostatData.temperature;
-    const target = thermostatConfig.targetTemp;
+    const target = getCurrentTargetTemp();
+
+    // Si pas de cible (mode manuel), ne rien faire
+    if (target === null) {
+        thermostatState.currentAction = 'manual';
+        return;
+    }
+
     const hysteresis = thermostatConfig.hysteresis;
 
     const now = Date.now();
@@ -205,9 +354,10 @@ function regulateThermostat() {
     if (currentTemp < (target - hysteresis)) {
         if (!relayState && canChange) {
             setRelay(true);
+            updateThermostatLED(true);
             thermostatState.lastRelayChange = now;
             thermostatState.currentAction = 'heating';
-            console.log(`🔥 Thermostat AUTO: Chauffe (${currentTemp.toFixed(1)}°C < ${(target - hysteresis).toFixed(1)}°C)`);
+            console.log(`🔥 Thermostat AUTO: Chauffe (${currentTemp.toFixed(1)}°C < ${(target - hysteresis).toFixed(1)}°C, cible ${target.toFixed(1)}°C)`);
         } else if (!relayState && !canChange) {
             thermostatState.currentAction = 'waiting';
         } else {
@@ -218,6 +368,7 @@ function regulateThermostat() {
     else if (currentTemp >= target) {
         if (relayState && canChange) {
             setRelay(false);
+            updateThermostatLED(false);
             thermostatState.lastRelayChange = now;
             thermostatState.currentAction = 'idle';
             console.log(`✓ Thermostat AUTO: Arrêt (${currentTemp.toFixed(1)}°C >= ${target.toFixed(1)}°C)`);
@@ -280,6 +431,9 @@ const server = http.createServer((req, res) => {
 
                     // Mise à jour config
                     if (update.enabled !== undefined) thermostatConfig.enabled = update.enabled;
+                    if (update.mode !== undefined && ['manual', 'auto', 'programmed'].includes(update.mode)) {
+                        thermostatConfig.mode = update.mode;
+                    }
                     if (update.targetTemp !== undefined) {
                         thermostatConfig.targetTemp = Math.max(15, Math.min(25, parseFloat(update.targetTemp)));
                     }
@@ -299,6 +453,106 @@ const server = http.createServer((req, res) => {
                     res.end(JSON.stringify({ error: error.message }));
                 }
             });
+            return;
+        }
+    }
+
+    if (req.url === '/api/thermostat/preset') {
+        if (req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => { body += chunk.toString(); });
+            req.on('end', () => {
+                try {
+                    const { preset } = JSON.parse(body);
+
+                    if (!preset || !thermostatConfig.presets[preset]) {
+                        res.writeHead(400, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ error: 'Preset invalide' }));
+                        return;
+                    }
+
+                    thermostatConfig.programmedMode.activePreset = preset;
+                    thermostatConfig.programmedMode.override = null; // Annuler override
+                    saveThermostatConfig();
+
+                    console.log(`📅 Preset changé: ${preset}`);
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        success: true,
+                        preset: preset,
+                        currentTemp: getCurrentTargetTemp()
+                    }));
+                } catch (error) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: error.message }));
+                }
+            });
+            return;
+        }
+    }
+
+    if (req.url === '/api/thermostat/override') {
+        if (req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => { body += chunk.toString(); });
+            req.on('end', () => {
+                try {
+                    const { temp, durationMinutes } = JSON.parse(body);
+
+                    if (!temp || !durationMinutes) {
+                        res.writeHead(400, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ error: 'Paramètres manquants' }));
+                        return;
+                    }
+
+                    const tempValue = Math.max(15, Math.min(25, parseFloat(temp)));
+                    const expiresAt = Date.now() + (durationMinutes * 60 * 1000);
+
+                    thermostatConfig.programmedMode.override = {
+                        temp: tempValue,
+                        expiresAt: expiresAt
+                    };
+                    saveThermostatConfig();
+
+                    console.log(`🔄 Override: ${tempValue}°C pendant ${durationMinutes}min`);
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        success: true,
+                        override: thermostatConfig.programmedMode.override
+                    }));
+                } catch (error) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: error.message }));
+                }
+            });
+            return;
+        } else if (req.method === 'DELETE') {
+            thermostatConfig.programmedMode.override = null;
+            saveThermostatConfig();
+            console.log(`🔄 Override annulé`);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: true }));
+            return;
+        }
+    }
+
+    if (req.url === '/api/thermostat/schedule') {
+        if (req.method === 'GET') {
+            const preset = thermostatConfig.presets[thermostatConfig.programmedMode.activePreset];
+            const currentTemp = getCurrentTargetTemp();
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                activePreset: thermostatConfig.programmedMode.activePreset,
+                preset: preset,
+                currentTargetTemp: currentTemp,
+                override: thermostatConfig.programmedMode.override,
+                allPresets: Object.keys(thermostatConfig.presets).map(key => ({
+                    id: key,
+                    name: thermostatConfig.presets[key].name,
+                    description: thermostatConfig.presets[key].description
+                }))
+            }));
             return;
         }
     }
