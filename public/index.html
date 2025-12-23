@@ -669,6 +669,97 @@
                     </div>
                 </section>
 
+                <!-- Diagnostics Chaudière -->
+                <section class="mb-5">
+                    <h2 class="section-title">
+                        <i class="bi bi-tools"></i> Diagnostics Chaudière
+                    </h2>
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-3 text-dark"><i class="bi bi-fire"></i> État Combustion</h6>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span class="text-dark">Flamme active</span>
+                                        <span id="diagFlameActive" class="fw-bold text-dark">--</span>
+                                    </div>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span class="text-dark">Chauffage en cours</span>
+                                        <span id="diagHeatingFlame" class="fw-bold text-dark">--</span>
+                                    </div>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span class="text-dark">Cycles d'allumage</span>
+                                        <span id="diagIgnitionCycles" class="fw-bold text-dark">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-3 text-dark"><i class="bi bi-speedometer2"></i> Ventilation</h6>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span class="text-dark">Vitesse ventilateur</span>
+                                        <span id="diagFanSpeed" class="fw-bold text-dark">--</span>
+                                    </div>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span class="text-dark">Boost time</span>
+                                        <span id="diagBoostTime" class="fw-bold text-dark">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-3 text-dark"><i class="bi bi-clock-history"></i> Durées de vie</h6>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span class="text-dark">Durée vie chaudière</span>
+                                        <span id="diagBoilerLifeTime" class="fw-bold text-dark">--</span>
+                                    </div>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span class="text-dark">Durée vie brûleur</span>
+                                        <span id="diagBurnerLifeTime" class="fw-bold text-dark">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-3 text-dark"><i class="bi bi-thermometer"></i> Températures Circuit</h6>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span class="text-dark">Température départ</span>
+                                        <span id="diagWaterTempOut" class="fw-bold text-dark">--</span>
+                                    </div>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span class="text-dark">Température retour</span>
+                                        <span id="diagWaterTempIn" class="fw-bold text-dark">--</span>
+                                    </div>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span class="text-dark">Delta T</span>
+                                        <span id="diagDeltaT" class="fw-bold text-dark">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Dernière Erreur -->
+                <section class="mb-5">
+                    <h2 class="section-title">
+                        <i class="bi bi-exclamation-triangle"></i> Dernière Erreur
+                    </h2>
+                    <div class="card">
+                        <div class="card-body" id="errorCard">
+                            <div class="text-center text-dark" id="errorDisplay">
+                                <p class="mb-0">Chargement...</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- Réglages Chaudière (Read-only) -->
                 <section class="mb-5">
                     <h2 class="section-title">
@@ -1488,6 +1579,121 @@
             }
         }
 
+        // Charger données diagnostics chaudière
+        async function loadDiagnosticsData() {
+            try {
+                const response = await fetch('/api/boiler/diagnostics');
+                const data = await response.json();
+
+                // État combustion
+                const flameActive = data.flame_active?.value;
+                document.getElementById('diagFlameActive').textContent =
+                    flameActive !== null && flameActive !== undefined ? (flameActive ? 'OUI' : 'NON') : '--';
+
+                const heatingFlame = data.heating_flame?.value;
+                document.getElementById('diagHeatingFlame').textContent =
+                    heatingFlame !== null && heatingFlame !== undefined ? (heatingFlame ? 'OUI' : 'NON') : '--';
+
+                const ignitionCycles = data.ignition_cycles?.value;
+                document.getElementById('diagIgnitionCycles').textContent =
+                    ignitionCycles !== null && ignitionCycles !== undefined ? ignitionCycles.toLocaleString() : '--';
+
+                // Ventilation
+                const fanSpeed = data.fan_speed?.value;
+                document.getElementById('diagFanSpeed').textContent =
+                    fanSpeed !== null && fanSpeed !== undefined ? `${fanSpeed} rpm` : '--';
+
+                const boostTime = data.boost_time?.value;
+                document.getElementById('diagBoostTime').textContent =
+                    boostTime !== null && boostTime !== undefined ? `${boostTime}s` : '--';
+
+                // Durées de vie
+                const boilerLifeTime = data.boiler_life_time?.value;
+                if (boilerLifeTime !== null && boilerLifeTime !== undefined) {
+                    const hours = Math.floor(boilerLifeTime / 60);
+                    document.getElementById('diagBoilerLifeTime').textContent = `${hours.toLocaleString()}h`;
+                } else {
+                    document.getElementById('diagBoilerLifeTime').textContent = '--';
+                }
+
+                const burnerLifeTime = data.burner_heat_life_time?.value;
+                document.getElementById('diagBurnerLifeTime').textContent =
+                    burnerLifeTime !== null && burnerLifeTime !== undefined ? `${burnerLifeTime.toLocaleString()}h` : '--';
+
+                // Températures circuit
+                const waterTempOut = data.water_temp_out?.value;
+                document.getElementById('diagWaterTempOut').textContent =
+                    waterTempOut !== null && waterTempOut !== undefined ? `${waterTempOut.toFixed(1)}°C` : '--';
+
+                const waterTempIn = data.water_temp_in?.value;
+                document.getElementById('diagWaterTempIn').textContent =
+                    waterTempIn !== null && waterTempIn !== undefined ? `${waterTempIn.toFixed(1)}°C` : '--';
+
+                // Delta T
+                if (waterTempOut !== null && waterTempIn !== null && waterTempOut !== undefined && waterTempIn !== undefined) {
+                    const deltaT = waterTempOut - waterTempIn;
+                    document.getElementById('diagDeltaT').textContent = `${deltaT.toFixed(1)}°C`;
+                } else {
+                    document.getElementById('diagDeltaT').textContent = '--';
+                }
+
+            } catch (error) {
+                console.error('Erreur chargement diagnostics:', error);
+            }
+        }
+
+        // Charger dernière erreur
+        async function loadErrorsData() {
+            try {
+                const response = await fetch('/api/boiler/errors');
+                const data = await response.json();
+
+                const errorDisplay = document.getElementById('errorDisplay');
+                const errorCard = document.getElementById('errorCard');
+
+                if (data && data.error_code && data.error_code.value) {
+                    const errorCode = data.error_code.value;
+                    const zone = data.zone?.value || 'N/A';
+                    const year = data.year?.value;
+                    const month = data.month?.value;
+                    const day = data.day?.value;
+                    const time = data.time?.value || '';
+
+                    let dateStr = '--';
+                    if (year && month && day) {
+                        // Année au format 20YY
+                        const fullYear = year < 100 ? 2000 + year : year;
+                        dateStr = `${day.toString().padStart(2, '0')}/${month.toString().padStart(2, '0')}/${fullYear}`;
+                        if (time) {
+                            dateStr += ` ${time}`;
+                        }
+                    }
+
+                    errorDisplay.innerHTML = `
+                        <div class="alert alert-danger mb-0" role="alert">
+                            <h5 class="alert-heading"><i class="bi bi-exclamation-octagon"></i> Erreur ${errorCode}</h5>
+                            <hr>
+                            <p class="mb-1"><strong>Zone :</strong> ${zone}</p>
+                            <p class="mb-0"><strong>Date :</strong> ${dateStr}</p>
+                        </div>
+                    `;
+                } else {
+                    errorDisplay.innerHTML = `
+                        <div class="alert alert-success mb-0" role="alert">
+                            <i class="bi bi-check-circle"></i> Aucune erreur enregistrée
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Erreur chargement erreurs:', error);
+                document.getElementById('errorDisplay').innerHTML = `
+                    <div class="alert alert-warning mb-0" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i> Impossible de charger les erreurs
+                    </div>
+                `;
+            }
+        }
+
         // Charger les données au démarrage
         window.addEventListener('DOMContentLoaded', () => {
             loadData();
@@ -1497,6 +1703,8 @@
             updateRelayStatus();
             loadThermostatTabData();  // Charger onglet thermostat
             loadClimateData();  // Charger régulation climatique
+            loadDiagnosticsData();  // Charger diagnostics
+            loadErrorsData();  // Charger erreurs
 
             // Actualiser toutes les 10 secondes
             refreshInterval = setInterval(() => {
@@ -1506,6 +1714,8 @@
                 updateRelayStatus();
                 loadThermostatTabData();  // Rafraîchir onglet thermostat
                 loadClimateData();  // Rafraîchir régulation climatique
+                loadDiagnosticsData();  // Rafraîchir diagnostics
+                loadErrorsData();  // Rafraîchir erreurs
             }, 10000);
         });
 

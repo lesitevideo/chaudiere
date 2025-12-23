@@ -695,6 +695,59 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    // Route API - Diagnostics chaudière
+    if (req.url === '/api/boiler/diagnostics') {
+        const diagnosticParams = [
+            'heating_flame',
+            'ignition_cycles',
+            'fan_speed',
+            'flame_active',
+            'water_temp_out',
+            'water_temp_in',
+            'boost_time',
+            'boiler_life_time',
+            'burner_heat_life_time'
+        ];
+
+        Promise.all(
+            diagnosticParams.map(param =>
+                fetchEbusdData(`/data/boiler/${param}`)
+                    .then(data => ({ param, data }))
+                    .catch(err => ({ param, data: null, error: err.message }))
+            )
+        ).then(results => {
+            const diagnosticData = {};
+            results.forEach(({ param, data, error }) => {
+                if (data && data[param]) {
+                    diagnosticData[param] = data[param];
+                } else {
+                    diagnosticData[param] = { value: null, error };
+                }
+            });
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(diagnosticData));
+        }).catch(error => {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: error.message }));
+        });
+        return;
+    }
+
+    // Route API - Erreurs chaudière
+    if (req.url === '/api/boiler/errors') {
+        fetchEbusdData('/data/boiler/error_slot_9')
+            .then(data => {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(data.error_slot_9 || { value: null }));
+            })
+            .catch(error => {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: error.message }));
+            });
+        return;
+    }
+
     // Routes API - Proxy vers ebusd
     if (req.url.startsWith('/api/')) {
         const ebusPath = req.url.replace('/api', '');
