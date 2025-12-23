@@ -1529,9 +1529,9 @@
 
                 // Type de thermorégulation
                 const thermoregType = data.z1_thermoreg_type?.value;
-                const typeText = thermoregType === 0 ? 'Température fixe' :
-                                thermoregType === 1 ? 'Climatique' :
-                                thermoregType !== null ? `Type ${thermoregType}` : 'Non disponible';
+                const typeText = thermoregType === 'basic_on_off' ? 'Température fixe (On/Off)' :
+                                thermoregType === 'climatic' ? 'Climatique' :
+                                thermoregType !== null && thermoregType !== undefined ? thermoregType : 'Non disponible';
                 document.getElementById('climateThermoregType').textContent = typeText;
 
                 // Pente de la courbe (divisée par 100)
