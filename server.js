@@ -139,6 +139,39 @@ function updateThermostatLED(state) {
     req.end();
 }
 
+// Fonction pour interroger ebusd
+function fetchEbusdData(path) {
+    return new Promise((resolve, reject) => {
+        const options = {
+            hostname: EBUSD_HOST,
+            port: EBUSD_PORT,
+            path: path,
+            method: 'GET',
+            timeout: 5000
+        };
+
+        const req = http.request(options, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(data);
+                    resolve(parsed);
+                } catch (err) {
+                    reject(new Error('Invalid JSON from ebusd'));
+                }
+            });
+        });
+
+        req.on('error', reject);
+        req.on('timeout', () => {
+            req.destroy();
+            reject(new Error('Request timeout'));
+        });
+        req.end();
+    });
+}
+
 // Nettoyer les overrides expirés
 function cleanExpiredOverride() {
     if (thermostatConfig.programmedMode.override) {
@@ -619,6 +652,46 @@ const server = http.createServer((req, res) => {
             res.writeHead(500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: error.message }));
         }
+        return;
+    }
+
+    // Route API - Régulation climatique Zone 1
+    if (req.url === '/api/climate/zone1') {
+        const climateParams = [
+            'ext_temp',
+            'z1_thermoreg_slope',
+            'z1_thermoreg_offset',
+            'z1_thermoreg_type',
+            'z1_target_temp',
+            'z1_water_max_temp',
+            'z1_water_min_temp',
+            'z1_day_temp',
+            'z1_night_temp',
+            'z1_fixed_temp'
+        ];
+
+        Promise.all(
+            climateParams.map(param =>
+                fetchEbusdData(`/data/boiler/${param}`)
+                    .then(data => ({ param, data }))
+                    .catch(err => ({ param, data: null, error: err.message }))
+            )
+        ).then(results => {
+            const climateData = {};
+            results.forEach(({ param, data, error }) => {
+                if (data && data[param]) {
+                    climateData[param] = data[param];
+                } else {
+                    climateData[param] = { value: null, error };
+                }
+            });
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(climateData));
+        }).catch(error => {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: error.message }));
+        });
         return;
     }
 

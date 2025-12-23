@@ -593,6 +593,82 @@
                     </div>
                 </section>
 
+                <!-- Régulation Climatique Zone 1 -->
+                <section class="mb-5">
+                    <h2 class="section-title">
+                        <i class="bi bi-cloud-sun"></i> Régulation Climatique Zone 1
+                    </h2>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-3 text-dark"><i class="bi bi-thermometer-snow"></i> Sonde Extérieure</h6>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span class="text-dark">Température extérieure</span>
+                                        <span id="climateExtTemp" class="fw-bold text-dark">--</span>
+                                    </div>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span class="text-dark">Type régulation</span>
+                                        <span id="climateThermoregType" class="fw-bold text-dark">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-3 text-dark"><i class="bi bi-graph-up"></i> Courbe de Chauffe</h6>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span class="text-dark">Pente (slope)</span>
+                                        <span id="climateThermoregSlope" class="fw-bold text-dark">--</span>
+                                    </div>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span class="text-dark">Offset (parallèle)</span>
+                                        <span id="climateThermoregOffset" class="fw-bold text-dark">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-3 text-dark"><i class="bi bi-water"></i> Température Eau</h6>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span class="text-dark">Consigne calculée</span>
+                                        <span id="climateTargetTemp" class="fw-bold text-dark">--</span>
+                                    </div>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span class="text-dark">Limites</span>
+                                        <span id="climateWaterLimits" class="fw-bold text-dark">--</span>
+                                    </div>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span class="text-dark">Température fixe</span>
+                                        <span id="climateFixedTemp" class="fw-bold text-dark">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-3 text-dark"><i class="bi bi-brightness-high"></i> Températures Jour/Nuit</h6>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span class="text-dark">Température jour</span>
+                                        <span id="climateDayTemp" class="fw-bold text-dark">--</span>
+                                    </div>
+                                    <div class="info-row d-flex justify-content-between">
+                                        <span class="text-dark">Température nuit</span>
+                                        <span id="climateNightTemp" class="fw-bold text-dark">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info mt-3 text-dark" role="alert">
+                        <i class="bi bi-info-circle"></i> <strong>Note :</strong> Ces paramètres se configurent uniquement via le panneau de commande de la chaudière (lecture seule via eBUS).
+                    </div>
+                </section>
+
                 <!-- Réglages Chaudière (Read-only) -->
                 <section class="mb-5">
                     <h2 class="section-title">
@@ -1349,6 +1425,69 @@
             }
         }
 
+        // Charger données régulation climatique
+        async function loadClimateData() {
+            try {
+                const response = await fetch('/api/climate/zone1');
+                const data = await response.json();
+
+                // Température extérieure
+                const extTemp = data.ext_temp?.value;
+                document.getElementById('climateExtTemp').textContent =
+                    extTemp !== null && extTemp !== undefined ? `${extTemp.toFixed(1)}°C` : 'Non disponible';
+
+                // Type de thermorégulation
+                const thermoregType = data.z1_thermoreg_type?.value;
+                const typeText = thermoregType === 0 ? 'Température fixe' :
+                                thermoregType === 1 ? 'Climatique' :
+                                thermoregType !== null ? `Type ${thermoregType}` : 'Non disponible';
+                document.getElementById('climateThermoregType').textContent = typeText;
+
+                // Pente de la courbe (divisée par 100)
+                const slope = data.z1_thermoreg_slope?.value;
+                document.getElementById('climateThermoregSlope').textContent =
+                    slope !== null && slope !== undefined ? (slope / 100).toFixed(2) : '--';
+
+                // Offset
+                const offset = data.z1_thermoreg_offset?.value;
+                document.getElementById('climateThermoregOffset').textContent =
+                    offset !== null && offset !== undefined ? `${offset > 0 ? '+' : ''}${offset.toFixed(1)}°C` : '--';
+
+                // Température cible calculée
+                const targetTemp = data.z1_target_temp?.value;
+                document.getElementById('climateTargetTemp').textContent =
+                    targetTemp !== null && targetTemp !== undefined ? `${targetTemp.toFixed(1)}°C` : '--';
+
+                // Limites eau
+                const maxTemp = data.z1_water_max_temp?.value;
+                const minTemp = data.z1_water_min_temp?.value;
+                if (minTemp !== null && maxTemp !== null && minTemp !== undefined && maxTemp !== undefined) {
+                    document.getElementById('climateWaterLimits').textContent =
+                        `${minTemp.toFixed(0)}°C - ${maxTemp.toFixed(0)}°C`;
+                } else {
+                    document.getElementById('climateWaterLimits').textContent = '--';
+                }
+
+                // Température fixe
+                const fixedTemp = data.z1_fixed_temp?.value;
+                document.getElementById('climateFixedTemp').textContent =
+                    fixedTemp !== null && fixedTemp !== undefined ? `${fixedTemp.toFixed(1)}°C` : '--';
+
+                // Températures jour/nuit
+                const dayTemp = data.z1_day_temp?.value;
+                document.getElementById('climateDayTemp').textContent =
+                    dayTemp !== null && dayTemp !== undefined ? `${dayTemp.toFixed(1)}°C` : '--';
+
+                const nightTemp = data.z1_night_temp?.value;
+                document.getElementById('climateNightTemp').textContent =
+                    nightTemp !== null && nightTemp !== undefined ? `${nightTemp.toFixed(1)}°C` : '--';
+
+            } catch (error) {
+                console.error('Erreur chargement données climatiques:', error);
+                // En cas d'erreur, on laisse les valeurs à "--"
+            }
+        }
+
         // Charger les données au démarrage
         window.addEventListener('DOMContentLoaded', () => {
             loadData();
@@ -1357,6 +1496,7 @@
             loadThermostatState();
             updateRelayStatus();
             loadThermostatTabData();  // Charger onglet thermostat
+            loadClimateData();  // Charger régulation climatique
 
             // Actualiser toutes les 10 secondes
             refreshInterval = setInterval(() => {
@@ -1365,6 +1505,7 @@
                 loadThermostatState();
                 updateRelayStatus();
                 loadThermostatTabData();  // Rafraîchir onglet thermostat
+                loadClimateData();  // Rafraîchir régulation climatique
             }, 10000);
         });
 
