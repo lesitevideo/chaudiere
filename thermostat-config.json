@@ -2,8 +2,8 @@
   "mode": "auto",
   "enabled": false,
   "targetTemp": 20.0,
-  "hysteresis": 1.0,
-  "minCycleDuration": 600,
+  "hysteresis": 1.5,
+  "minCycleDuration": 900,
   "programmedMode": {
     "activePreset": "confort",
     "override": null
