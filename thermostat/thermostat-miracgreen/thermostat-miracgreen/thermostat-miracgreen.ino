@@ -25,7 +25,7 @@
 // WiFi
 const char* ssid     = "Freebox-36E407";
 const char* password = "ds3knqrfzvq2rfwnq7n529";
-
+const char* hostname = "thermostat-salon";
 // Server
 WiFiServer server(80);
 const long CLIENT_TIMEOUT_MS = 2000;
@@ -327,6 +327,8 @@ void setup() {
   Serial.print("Connecting to ");
   Serial.println(ssid);
 
+  WiFi.mode(WIFI_STA);
+  WiFi.setHostname(hostname);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
