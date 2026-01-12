@@ -1,0 +1,83 @@
+/*******************************************************
+ * ESP32 + BME280 — API HTTP JSON
+ *
+ * Adresse IP :
+ *   http://192.168.1.199
+ *
+ * ROUTES DISPONIBLES
+ * -----------------------------------------------------
+ *
+ * GET  /
+ *   Alias de /data
+ *
+ *   curl http://192.168.1.199/
+ *
+ * -----------------------------------------------------
+ *
+ * GET  /data
+ *   Retourne les données du capteur
+ *
+ *   curl http://192.168.1.199/data
+ *
+ *   Réponse :
+ *   {
+ *     "temperature": 23.87,
+ *     "humidity": 57.51,
+ *     "pressure": 1013.47,
+ *     "timestamp": 1736161234,
+ *     "status": "ok"
+ *   }
+ *
+ * -----------------------------------------------------
+ *
+ * GET  /health
+ *   État du service
+ *
+ *   curl http://192.168.1.199/health
+ *
+ *   Réponse :
+ *   {
+ *     "status": "running",
+ *     "timestamp": 1736161234
+ *   }
+ *
+ * -----------------------------------------------------
+ *
+ * GET  /api/led/status
+ *   État de la LED chauffage
+ *
+ *   curl http://192.168.1.199/api/led/status
+ *
+ *   Réponse :
+ *   {
+ *     "heating": false
+ *   }
+ *
+ * -----------------------------------------------------
+ *
+ * POST /api/led/heating
+ *   Allume ou éteint la LED chauffage
+ *
+ *   Payload JSON :
+ *     { "state": "on" }
+ *     { "state": "off" }
+ *
+ *   curl -X POST \
+ *     -H "Content-Type: application/json" \
+ *     -d '{"state":"on"}' \
+ *     http://192.168.1.199/api/led/heating
+ *
+ *   curl -X POST \
+ *     -H "Content-Type: application/json" \
+ *     -d '{"state":"off"}' \
+ *     http://192.168.1.199/api/led/heating
+ *
+ * -----------------------------------------------------
+ *
+ * STATUTS POSSIBLES
+ *   - "starting" : démarrage
+ *   - "ok"       : données valides
+ *   - "error"    : erreur capteur
+ *   - "stale"    : données trop anciennes
+ *
+ *******************************************************/
