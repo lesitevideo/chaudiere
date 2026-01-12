@@ -13,7 +13,9 @@ const EBUSD_PORT = 8889;
 const GPIO_PIN = 14;
 
 // Configuration thermostat
-const THERMOSTAT_URL = 'http://thermostat-salon.local:5000/data';
+const THERMOSTAT_BASE_URL = 'http://thermostat-salon.local';
+const THERMOSTAT_DATA_URL = `${THERMOSTAT_BASE_URL}/data`;
+const THERMOSTAT_LED_URL = `${THERMOSTAT_BASE_URL}/api/led/heating`;
 const THERMOSTAT_REFRESH_INTERVAL = 60000; // 60 secondes
 const THERMOSTAT_CONFIG_FILE = path.join(__dirname, 'thermostat-config.json');
 
@@ -105,12 +107,12 @@ function getRelayState() {
 // Fonction pour mettre à jour la LED du thermostat
 function updateThermostatLED(state) {
     const ledState = state ? 'on' : 'off';
-    const url = new URL('http://thermostat-salon.local:5000/api/led/heating');
+    const url = new URL(THERMOSTAT_LED_URL);
 
     const postData = JSON.stringify({ state: ledState });
     const options = {
         hostname: url.hostname,
-        port: url.port || 5000,
+        port: url.port || 80,
         path: url.pathname,
         method: 'POST',
         headers: {
@@ -274,10 +276,10 @@ function getCurrentTargetTemp() {
 // Fonction pour récupérer les données du thermostat
 function fetchThermostatData() {
     return new Promise((resolve, reject) => {
-        const url = new URL(THERMOSTAT_URL);
+        const url = new URL(THERMOSTAT_DATA_URL);
         const options = {
             hostname: url.hostname,
-            port: url.port || 5000,
+            port: url.port || 80,
             path: url.pathname,
             method: 'GET',
             timeout: 5000
@@ -798,7 +800,7 @@ server.listen(PORT, HOSTNAME, () => {
     console.log(`\n🌐 Accès réseau:`);
     console.log(`   http://mira-c-green.local:${PORT}`);
     console.log(`\n🌡️  Thermostat:`);
-    console.log(`   ${THERMOSTAT_URL}`);
+    console.log(`   ${THERMOSTAT_DATA_URL}`);
     console.log(`   Rafraîchissement: ${THERMOSTAT_REFRESH_INTERVAL / 1000}s`);
     console.log(`   Mode auto: ${thermostatConfig.enabled ? 'ACTIVÉ' : 'désactivé'}`);
     console.log(`   Consigne: ${thermostatConfig.targetTemp}°C`);
